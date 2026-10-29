@@ -11,16 +11,13 @@ import java.util.function.Consumer;
 import lombok.extern.slf4j.Slf4j;
 import okhttp3.Call;
 import okhttp3.Callback;
-import okhttp3.HttpUrl;
-import okhttp3.OkHttpClient;
-import okhttp3.Request;
-import okhttp3.RequestBody;
 import okhttp3.Response;
 
 /**
- * "Delete my shared data": asks the server to delete everything this install sent (DELETE v1/me with the install
- * token), then disconnects and starts over as a new, unlinkable install id. Only ever started by the player (the
- * panel's Privacy menu, after a confirm dialog), so it may contact the server while disconnected.
+ * "Delete my shared data": asks the server to delete everything this install sent ({@link ServerApi#deleteMe},
+ * DELETE v1/me with the install token), then disconnects and starts over as a new, unlinkable install id. Only ever
+ * started by the player (the panel's Privacy menu, after a confirm dialog), and like every request only sent while
+ * connected: when not connected nothing is sent ({@link Outcome#NOT_CONNECTED}).
  * <p>
  * Steps: pause the uploader; once no upload is in flight (a callback, never blocking), send the DELETE. Without a
  * token (an install that uploaded before tokens existed) it registers first. A 401 registers once and retries. If
@@ -46,6 +43,8 @@ class DataDeletion
 		 * deleted, and the data may still be on the server. The id is kept so the player can quote it.
 		 */
 		KEY_LOST,
+		/** Not connected, so nothing was sent; everything stays as it was. */
+		NOT_CONNECTED,
 		/** Server error, rate limited or unreachable; still connected. */
 		FAILED
 	}
@@ -87,9 +86,7 @@ class DataDeletion
 		}
 	}
 
-	private final OkHttpClient http;
-	private final Gson gson;
-	private final HttpUrl meUrl;
+	private final ServerApi api;
 	private final ServerIdentity identity;
 	private final InstallAuth auth;
 	private final TradeUploader uploader;
@@ -99,14 +96,11 @@ class DataDeletion
 	/** Set on plugin shutdown: the result isn't reported any more (the local state is still updated). */
 	private volatile boolean cancelled;
 
-	DataDeletion(OkHttpClient http, Gson gson, HttpUrl base, ServerIdentity identity, TradeUploader uploader,
-		Runnable disconnect)
+	DataDeletion(ServerApi api, Gson gson, ServerIdentity identity, TradeUploader uploader, Runnable disconnect)
 	{
-		this.http = http;
-		this.gson = gson;
-		this.meUrl = base.newBuilder().addPathSegments("v1/me").build();
+		this.api = api;
 		this.identity = identity;
-		this.auth = new InstallAuth(http, gson, base, identity);
+		this.auth = new InstallAuth(api, gson, identity);
 		this.uploader = uploader;
 		this.disconnect = disconnect;
 	}
@@ -178,6 +172,9 @@ class DataDeletion
 				case CONFLICT:
 					finish(new Result(Outcome.KEY_LOST, r.getCode(), r.getInstallId()), done);
 					break;
+				case NOT_CONNECTED:
+					finish(new Result(Outcome.NOT_CONNECTED, -1), done);
+					break;
 				default:
 					finish(new Result(Outcome.FAILED, r.getCode()), done);
 			}
@@ -188,22 +185,7 @@ class DataDeletion
 	{
 		JsonObject body = new JsonObject();
 		body.addProperty("installId", installId);
-		Request request = InstallAuth.bearer(new Request.Builder()
-			.url(meUrl)
-			.delete(RequestBody.create(InstallAuth.JSON, gson.toJson(body))), token)
-			.build();
-		Call call;
-		try
-		{
-			call = http.newCall(request);
-		}
-		catch (RuntimeException e)
-		{
-			log.warn("Couldn't start data deletion", e);
-			finish(new Result(Outcome.FAILED, -1), done);
-			return;
-		}
-		call.enqueue(new Callback()
+		Callback callback = new Callback()
 		{
 			@Override
 			public void onFailure(Call c, IOException e)
@@ -240,20 +222,34 @@ class DataDeletion
 					finish(new Result(Outcome.FAILED, code), done);
 				}
 			}
-		});
+		};
+		try
+		{
+			api.deleteMe(token, body, callback);
+		}
+		catch (ServerApi.NotConnectedException e)
+		{
+			log.debug(e.getMessage());
+			finish(new Result(Outcome.NOT_CONNECTED, -1), done);
+		}
+		catch (RuntimeException e)
+		{
+			log.warn("Couldn't start data deletion", e);
+			finish(new Result(Outcome.FAILED, -1), done);
+		}
 	}
 
 	/**
 	 * Done. After a deletion (or when there was nothing to delete): disconnect, switch to a new install id without a
 	 * token and drop anything queued. When the key was lost: disconnect and drop the queue too (the player asked for
-	 * their data to go), but keep the install id, which the message shows. After a failure: stay connected and resume
-	 * uploading.
+	 * their data to go), but keep the install id, which the message shows. After a failure, or when nothing was sent
+	 * (not connected): change nothing and resume uploading.
 	 */
 	private void finish(Result result, Consumer<Result> done)
 	{
 		try
 		{
-			if (result.outcome == Outcome.FAILED)
+			if (unchanged(result.outcome))
 			{
 				uploader.resume();
 			}
@@ -276,7 +272,7 @@ class DataDeletion
 		{
 			running.set(false);
 		}
-		if (result.outcome != Outcome.FAILED)
+		if (!unchanged(result.outcome))
 		{
 			try
 			{
@@ -306,11 +302,17 @@ class DataDeletion
 		}
 	}
 
+	/** Nothing changed on the server (a failure, or not sent at all), so nothing changes here either. */
+	private static boolean unchanged(Outcome outcome)
+	{
+		return outcome == Outcome.FAILED || outcome == Outcome.NOT_CONNECTED;
+	}
+
 	/** What to tell the player afterwards. */
 	static String message(Result r)
 	{
 		String m = outcomeMessage(r);
-		if (r.outcome == Outcome.FAILED || r.lostIds.isEmpty())
+		if (unchanged(r.outcome) || r.lostIds.isEmpty())
 		{
 			return m;
 		}
@@ -336,6 +338,9 @@ class DataDeletion
 				return "This computer's key for the server was lost or replaced, so the plugin can't prove the shared data "
 					+ "is yours, and nothing was deleted. To have it removed, send your install id " + r.installId
 					+ " to the contact on the privacy notice (Privacy > Privacy notice). The plugin is now disconnected.";
+			case NOT_CONNECTED:
+				return "Nothing was deleted: the plugin only contacts the server while connected. "
+					+ "Connect, then try again.";
 			default:
 				return r.code < 0
 					? "Couldn't reach the Hardcore World Tool Kit server. Try again later."

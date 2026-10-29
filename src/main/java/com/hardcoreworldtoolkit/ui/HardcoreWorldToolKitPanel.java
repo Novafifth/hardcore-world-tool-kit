@@ -79,6 +79,7 @@ public class HardcoreWorldToolKitPanel extends PluginPanel
 		+ " (your trades, offers and ids)? Market totals are recalculated without them. Your local trade log and profit"
 		+ " stay on this PC. This disconnects the plugin.";
 	static final String NOTHING_SHARED = "Nothing has been shared from this computer.";
+	static final String CONNECT_TO_DELETE = "Connect first: the plugin only contacts the server while connected.";
 
 	private final HardcoreWorldToolKitConfig config;
 	private final ItemManager itemManager;
@@ -382,10 +383,12 @@ public class HardcoreWorldToolKitPanel extends PluginPanel
 		menu.add(notice);
 		JMenuItem delete = new JMenuItem(DELETE_ITEM);
 		boolean shared = sharedData.mayHaveShared();
+		// Deleting is a request to the server too, so like every request it needs the Connect setting.
+		boolean connected = config.connected();
 		boolean deleting = sharedData.isDeleting();
-		delete.setEnabled(shared && !deleting);
-		delete.setToolTipText(deleting ? "A deletion is running." : shared
-			? "Delete everything this computer has shared with the server, then disconnect" : NOTHING_SHARED);
+		delete.setEnabled(shared && connected && !deleting);
+		delete.setToolTipText(deleting ? "A deletion is running." : !shared ? NOTHING_SHARED : !connected
+			? CONNECT_TO_DELETE : "Delete everything this computer has shared with the server, then disconnect");
 		delete.addActionListener(e -> confirmDelete());
 		menu.add(delete);
 		menu.show(privacyLink, 0, privacyLink.getHeight());
@@ -393,11 +396,9 @@ public class HardcoreWorldToolKitPanel extends PluginPanel
 
 	private void confirmDelete()
 	{
-		// While disconnected this is the one request the plugin sends without the opt-in, so it says so first.
-		String text = DELETE_CONFIRM + (config.connected() ? ""
-			: "<br><br>" + HardcoreWorldToolKitConfig.THIRD_PARTY_WARNING + ". You are not connected: deleting sends this one request.");
-		int answer = JOptionPane.showConfirmDialog(this, "<html><body style='width: 240px'>" + text + "</body></html>",
-			DELETE_TITLE, JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
+		int answer = JOptionPane.showConfirmDialog(this,
+			"<html><body style='width: 240px'>" + DELETE_CONFIRM + "</body></html>", DELETE_TITLE,
+			JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
 		if (answer != JOptionPane.YES_OPTION)
 		{
 			return;

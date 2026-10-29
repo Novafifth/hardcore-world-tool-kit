@@ -50,7 +50,8 @@ public class TradeUploaderFlushTest
 	{
 		InstallIdentity id = FakeServer.identity(new HashMap<>());
 		id.setToken(id.installId(), FakeServer.tok('f'));
-		return new TradeUploader(http, gson, BASE, onSent, id, () -> true);
+		return new TradeUploader(new ServerApi(http, gson, BASE, FakeServer.config(() -> true)), gson, onSent, id,
+			() -> true);
 	}
 
 	private OkHttpClient fakeServer()

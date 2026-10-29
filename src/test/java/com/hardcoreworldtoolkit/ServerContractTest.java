@@ -40,8 +40,9 @@ public class ServerContractTest
 		Map<String, String> config = new ConcurrentHashMap<>();
 		InstallIdentity identity = FakeServer.identity(config);
 		AtomicBoolean connected = new AtomicBoolean(true);
+		ServerApi api = new ServerApi(http, gson, base, FakeServer.config(connected::get));
 		BlockingQueue<java.util.Set<Integer>> sent = new LinkedBlockingQueue<>();
-		TradeUploader up = new TradeUploader(http, gson, base, sent::add, identity, connected::get);
+		TradeUploader up = new TradeUploader(api, gson, sent::add, identity, connected::get);
 		String acct = AccountId.of(123456789L);
 		long now = System.currentTimeMillis() / 1000;
 
@@ -63,7 +64,7 @@ public class ServerContractTest
 		assertNotNull("registered", firstToken);
 
 		BlockingQueue<Object> imp = new LinkedBlockingQueue<>();
-		new MarketClient(http, gson, base, 9000).itemAsync(4151, imp::add, imp::add);
+		new MarketClient(api, gson, base, 9000).itemAsync(4151, imp::add, imp::add);
 		Object d = imp.poll(10, TimeUnit.SECONDS);
 		assertTrue(String.valueOf(d), d instanceof MarketData.ItemDetail);
 		// The last price is the fill's, and vol24 counts it.
@@ -80,7 +81,7 @@ public class ServerContractTest
 		assertNotNull(identity.token());
 
 		// 3. Reads with include=trust,fill carry the new fields.
-		MarketClient market = new MarketClient(http, gson, base, 9000);
+		MarketClient market = new MarketClient(api, gson, base, 9000);
 		BlockingQueue<Object> got = new LinkedBlockingQueue<>();
 		market.itemAsync(4151, got::add, got::add);
 		Object detail = got.poll(10, TimeUnit.SECONDS);
@@ -97,7 +98,7 @@ public class ServerContractTest
 		// 4. Delete my shared data: DELETE v1/me with the token, then disconnected with a new id and no token.
 		String beforeDelete = identity.installId();
 		BlockingQueue<DataDeletion.Result> results = new LinkedBlockingQueue<>();
-		DataDeletion deletion = new DataDeletion(http, gson, base, identity, up, () -> connected.set(false));
+		DataDeletion deletion = new DataDeletion(api, gson, identity, up, () -> connected.set(false));
 		assertTrue(deletion.start(results::add));
 		DataDeletion.Result r = results.poll(20, TimeUnit.SECONDS);
 		assertNotNull(r);
@@ -106,12 +107,13 @@ public class ServerContractTest
 		assertNull(identity.token());
 		assertNotEquals(beforeDelete, identity.installId());
 
-		// 5. The deleted install's id can't be registered again (tombstone).
+		// 5. The deleted install's id can't be registered again (tombstone), by a client that is connected.
 		Map<String, String> ghostConfig = new ConcurrentHashMap<>();
 		ghostConfig.put(InstallIdentity.KEY_INSTALL_ID, beforeDelete);
 		InstallIdentity old = FakeServer.identity(ghostConfig);
 		BlockingQueue<InstallAuth.Result> reg = new LinkedBlockingQueue<>();
-		new InstallAuth(http, gson, base, old).register(false, reg::add);
+		ServerApi connectedApi = new ServerApi(http, gson, base, FakeServer.config(() -> true));
+		new InstallAuth(connectedApi, gson, old).register(false, reg::add);
 		InstallAuth.Result again = reg.poll(10, TimeUnit.SECONDS);
 		assertNotNull(again);
 		assertEquals("tombstoned id", InstallAuth.Status.DELETED, again.getStatus());

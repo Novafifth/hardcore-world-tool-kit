@@ -37,7 +37,7 @@ public class TradeUploaderAuthTest
 
 	private TradeUploader uploader()
 	{
-		return new TradeUploader(server.client(), gson, FakeServer.BASE, ids ->
+		return new TradeUploader(server.api(gson, allowed::get), gson, ids ->
 		{
 		}, identity, allowed::get);
 	}
@@ -328,7 +328,7 @@ public class TradeUploaderAuthTest
 			// 401 -> re-register -> 401 again; then a 409 rotation and a malformed register body.
 			server.on(SUBMIT, status(401), status(401), status(500))
 				.on(REGISTER, token(a), status(409), token(b));
-			TradeUploader up = new TradeUploader(server.client(), gson, FakeServer.BASE, ids ->
+			TradeUploader up = new TradeUploader(server.api(gson, allowed::get), gson, ids ->
 			{
 				throw new IllegalStateException("listener boom");
 			}, identity, allowed::get);

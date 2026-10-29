@@ -29,17 +29,12 @@ import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
 import okhttp3.Call;
 import okhttp3.Callback;
-import okhttp3.HttpUrl;
-import okhttp3.MediaType;
-import okhttp3.OkHttpClient;
-import okhttp3.Request;
-import okhttp3.RequestBody;
 import okhttp3.Response;
 
 /**
- * Queues trade events and ships them to the collection server in batches. All network calls go through OkHttp's
- * own thread pool via enqueue(). Item icons are only referenced when added (on the client thread) and PNG-encoded
- * later, in {@link #flush}, off the client thread.
+ * Queues trade events and ships them to the collection server in batches. Every request goes through
+ * {@link ServerApi}, on OkHttp's own thread pool via enqueue(). Item icons are only referenced when added (on the
+ * client thread) and PNG-encoded later, in {@link #flush}, off the client thread.
  * <p>
  * One request carries one world and one account: events and open offers are grouped by {@link BatchKey}.
  * <p>
@@ -51,14 +46,12 @@ import okhttp3.Response;
 @Slf4j
 class TradeUploader
 {
-	private static final MediaType JSON = InstallAuth.JSON;
 	private static final int MAX_BATCH = 200;
 	private static final int MAX_QUEUE = 5000;
 	private static final int MAX_ITEMS_PER_BATCH = 50;
 
-	private final OkHttpClient http;
+	private final ServerApi api;
 	private final Gson gson;
-	private final HttpUrl submitUrl;
 	/** Told the item ids of each batch of events the server accepted (on an OkHttp thread). */
 	private final Consumer<Set<Integer>> onSent;
 
@@ -135,15 +128,14 @@ class TradeUploader
 	 * @param allowed  whether uploading (and registering) is allowed now, i.e. connected and sharing; checked by
 	 *                 {@link #flush()} and again before each follow-up request of a chain
 	 */
-	TradeUploader(OkHttpClient http, Gson gson, HttpUrl base, Consumer<Set<Integer>> onSent, ServerIdentity identity,
+	TradeUploader(ServerApi api, Gson gson, Consumer<Set<Integer>> onSent, ServerIdentity identity,
 		BooleanSupplier allowed)
 	{
-		this.http = http;
+		this.api = api;
 		this.gson = gson;
-		this.submitUrl = base.newBuilder().addPathSegments("v1/submit").build();
 		this.onSent = onSent;
 		this.identity = identity;
-		this.auth = new InstallAuth(http, gson, base, identity);
+		this.auth = new InstallAuth(api, gson, identity);
 		this.allowed = allowed;
 	}
 
@@ -405,7 +397,8 @@ class TradeUploader
 	}
 
 	/**
-	 * Build and enqueue one request. Returns false (nothing enqueued) when there is nothing to send.
+	 * Build and enqueue one request. Returns false (nothing enqueued) when there is nothing to send, or when no longer
+	 * connected and sharing.
 	 *
 	 * @param token    the install token for {@code installId}
 	 * @param reauthed the token was just issued in this chain, so a 401 isn't answered by registering again
@@ -450,11 +443,7 @@ class TradeUploader
 
 		JsonObject body = buildBody(gson, installId, key, Instant.now().getEpochSecond(), events, offers, items);
 
-		Request.Builder request = InstallAuth.bearer(new Request.Builder()
-			.url(submitUrl)
-			.post(RequestBody.create(JSON, gson.toJson(body))), token);
-
-		http.newCall(request.build()).enqueue(new Callback()
+		Callback callback = new Callback()
 		{
 			@Override
 			public void onFailure(Call call, IOException e)
@@ -524,7 +513,17 @@ class TradeUploader
 					}
 				}
 			}
-		});
+		};
+		try
+		{
+			api.postSubmit(token, body, callback);
+		}
+		catch (ServerApi.NotConnectedException e)
+		{
+			// Switched off since flush checked: nothing was sent, and the batch stays queued.
+			log.debug(e.getMessage());
+			return false;
+		}
 		return true;
 	}
 

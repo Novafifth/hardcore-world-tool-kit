@@ -8,18 +8,13 @@ import java.util.function.Consumer;
 import lombok.extern.slf4j.Slf4j;
 import okhttp3.Call;
 import okhttp3.Callback;
-import okhttp3.HttpUrl;
-import okhttp3.MediaType;
-import okhttp3.OkHttpClient;
-import okhttp3.Request;
-import okhttp3.RequestBody;
 import okhttp3.Response;
 import okhttp3.ResponseBody;
 
 /**
- * Gets an install token from the collection server (POST v1/register {installId}) and stores it in the
- * {@link ServerIdentity}. Asynchronous (OkHttp enqueue); the callback runs exactly once, on an OkHttp thread, or on
- * the caller's thread when the request can't even be started.
+ * Gets an install token from the collection server ({@link ServerApi#postRegister}, POST v1/register {installId}) and
+ * stores it in the {@link ServerIdentity}. Asynchronous (OkHttp enqueue); the callback runs exactly once, on an OkHttp
+ * thread, or on the caller's thread when the request isn't sent (not connected) or can't even be started.
  * <p>
  * The token is a secret for this install: it is never logged, and neither are response bodies or request headers.
  * Only status codes are logged, at debug level.
@@ -27,7 +22,6 @@ import okhttp3.ResponseBody;
 @Slf4j
 class InstallAuth
 {
-	static final MediaType JSON = MediaType.parse("application/json; charset=utf-8");
 	/** The server's 409 error for an install id whose data was deleted (vs "installId already registered"). */
 	static final String DELETED_ERROR = "installId deleted";
 
@@ -42,6 +36,8 @@ class InstallAuth
 		CONFLICT,
 		/** 409 "installId deleted": this install id's data was deleted already. Only when not rotating. */
 		DELETED,
+		/** Not sent: the plugin isn't connected ({@link ServerApi.NotConnectedException}). */
+		NOT_CONNECTED,
 		/** Rate limited, server error, bad response or network failure. */
 		FAILED
 	}
@@ -85,23 +81,15 @@ class InstallAuth
 		}
 	}
 
-	private final OkHttpClient http;
+	private final ServerApi api;
 	private final Gson gson;
-	private final HttpUrl registerUrl;
 	private final ServerIdentity identity;
 
-	InstallAuth(OkHttpClient http, Gson gson, HttpUrl base, ServerIdentity identity)
+	InstallAuth(ServerApi api, Gson gson, ServerIdentity identity)
 	{
-		this.http = http;
+		this.api = api;
 		this.gson = gson;
-		this.registerUrl = base.newBuilder().addPathSegments("v1/register").build();
 		this.identity = identity;
-	}
-
-	/** Adds the install token to a request. */
-	static Request.Builder bearer(Request.Builder req, String token)
-	{
-		return req.header("Authorization", "Bearer " + token);
 	}
 
 	/**
@@ -116,22 +104,7 @@ class InstallAuth
 		String installId = identity.installId();
 		JsonObject body = new JsonObject();
 		body.addProperty("installId", installId);
-		Request request = new Request.Builder()
-			.url(registerUrl)
-			.post(RequestBody.create(JSON, gson.toJson(body)))
-			.build();
-		Call call;
-		try
-		{
-			call = http.newCall(request);
-		}
-		catch (RuntimeException e)
-		{
-			log.warn("Couldn't start registration", e);
-			deliver(done, new Result(Status.FAILED, installId, null, -1));
-			return;
-		}
-		call.enqueue(new Callback()
+		Callback callback = new Callback()
 		{
 			@Override
 			public void onFailure(Call c, IOException e)
@@ -202,7 +175,21 @@ class InstallAuth
 					deliver(done, result);
 				}
 			}
-		});
+		};
+		try
+		{
+			api.postRegister(body, callback);
+		}
+		catch (ServerApi.NotConnectedException e)
+		{
+			log.debug(e.getMessage());
+			deliver(done, new Result(Status.NOT_CONNECTED, installId, null, -1));
+		}
+		catch (RuntimeException e)
+		{
+			log.warn("Couldn't start registration", e);
+			deliver(done, new Result(Status.FAILED, installId, null, -1));
+		}
 	}
 
 	/** The "error" field of an error response, or null. */

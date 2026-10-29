@@ -117,7 +117,7 @@ public class NoIpSentTest
 	public void registerSubmitAndDeleteCarryNoIp() throws Exception
 	{
 		List<String> local = localAddresses();
-		TradeUploader up = new TradeUploader(server.client(), gson, FakeServer.BASE, ids ->
+		TradeUploader up = new TradeUploader(server.api(gson, connected::get), gson, ids ->
 		{
 		}, identity, connected::get);
 		up.add(fill("k1:fill:3"), "acct-hash");
@@ -139,7 +139,7 @@ public class NoIpSentTest
 		assertNoIp(sub.request, sub.body, local);
 		FakeServer.awaitIdle(up);
 
-		DataDeletion deletion = new DataDeletion(server.client(), gson, FakeServer.BASE, identity, up,
+		DataDeletion deletion = new DataDeletion(server.api(gson, connected::get), gson, identity, up,
 			() -> connected.set(false));
 		LinkedBlockingQueue<DataDeletion.Result> results = new LinkedBlockingQueue<>();
 		assertTrue(deletion.start(results::add));
@@ -153,7 +153,7 @@ public class NoIpSentTest
 	public void marketReadsCarryNoIp() throws Exception
 	{
 		List<String> local = localAddresses();
-		MarketClient market = new MarketClient(server.client(), gson, FakeServer.BASE, 9000);
+		MarketClient market = new MarketClient(server.api(gson, connected::get), gson, FakeServer.BASE, 9000);
 		market.recent(5, r ->
 		{
 		}, err ->

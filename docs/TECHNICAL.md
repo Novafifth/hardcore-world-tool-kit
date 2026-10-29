@@ -82,6 +82,10 @@ in the settings. Both ask you to confirm this warning first:
 
 > This feature submits your IP address to a 3rd-party server not controlled or verified by RuneLite developers.
 
+In the code, every request the plugin can make is one method of `ServerApi` (`POST v1/register`, `POST v1/submit`,
+`DELETE v1/me` and the market reads below). Each of them first checks that setting (uploads also *Share my trades*)
+and throws without sending anything when it is off.
+
 While connected, the panel reads market data from the server (`v1/recent` with
 `kinds=fill`, `v1/item/{id}`, `v1/item/{id}/series`, all with `world=9000`, the Hardcore economy id; the feed lists
 live fills only, while GE History rows show in the item views), the GE offer
@@ -148,8 +152,8 @@ from trusted offers when the server sends them. Older servers ignore the paramet
 - *Delete my shared data...* asks for confirmation, then deletes everything this computer has shared (your trades,
   offers and ids; `DELETE v1/me` with the install token) and recalculates the market totals without them. It then
   disconnects the plugin, and if you connect again later you start over as a new, unlinked install id. Your local trade
-  log and profit stay on your PC. This is the one request the plugin may send while disconnected, because you asked for
-  it; it is only offered when this computer has a token or is connected. Data uploaded from another computer has to be
+  log and profit stay on your PC. Like every request it is only sent while connected: while disconnected the menu item
+  is greyed out and says to connect first. Data uploaded from another computer has to be
   deleted from that computer. If this computer's key was lost (the server holds the install id under a token the
   plugin no longer has), nothing can be deleted from here: the plugin says so, disconnects and shows the install id,
   which you can send to the contact on the privacy notice.

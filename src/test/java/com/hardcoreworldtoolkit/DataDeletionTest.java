@@ -34,11 +34,11 @@ public class DataDeletionTest
 	private final InstallIdentity identity = FakeServer.identity(config);
 	/** The "connected" setting. */
 	private final AtomicBoolean connected = new AtomicBoolean(true);
-	private final TradeUploader uploader = new TradeUploader(server.client(), gson, FakeServer.BASE, ids ->
+	private final ServerApi api = server.api(gson, connected::get);
+	private final TradeUploader uploader = new TradeUploader(api, gson, ids ->
 	{
 	}, identity, connected::get);
-	private final DataDeletion deletion = new DataDeletion(server.client(), gson, FakeServer.BASE, identity, uploader,
-		() -> connected.set(false));
+	private final DataDeletion deletion = new DataDeletion(api, gson, identity, uploader, () -> connected.set(false));
 	private final BlockingQueue<DataDeletion.Result> results = new LinkedBlockingQueue<>();
 
 	private static TradeEvent fill(String id)
@@ -150,10 +150,38 @@ public class DataDeletionTest
 	}
 
 	@Test
+	public void nothingIsSentWhileDisconnected() throws InterruptedException
+	{
+		String id = identity.installId();
+		String token = tok('d');
+		identity.setToken(id, token);
+		uploader.add(fill("e1"), "acct");
+		connected.set(false);
+
+		assertTrue(deletion.start(results::add));
+		DataDeletion.Result r = result();
+		assertEquals(DataDeletion.Outcome.NOT_CONNECTED, r.outcome);
+		assertNull("nothing sent", server.poll(200));
+		assertEquals(id, identity.installId());
+		assertEquals(token, identity.token());
+		assertTrue("queue kept", uploader.hasPending());
+		assertFalse(uploader.isPaused());
+		assertFalse(deletion.isRunning());
+		assertTrue(DataDeletion.message(r).contains("only contacts the server while connected"));
+
+		// Without a token it registers first: not sent either.
+		identity.clearToken(id);
+		assertTrue(deletion.start(results::add));
+		assertEquals(DataDeletion.Outcome.NOT_CONNECTED, result().outcome);
+		assertNull(server.poll(200));
+		assertEquals(id, identity.installId());
+		assertFalse(deletion.isRunning());
+	}
+
+	@Test
 	public void withoutATokenRegistersFirst() throws InterruptedException
 	{
 		String id = identity.installId();
-		connected.set(false); // deleting is an explicit action, allowed while disconnected
 		server.on(REGISTER, token(tok('l')));
 		deletion.start(results::add);
 		FakeServer.Seen reg = server.next();
@@ -224,8 +252,7 @@ public class DataDeletionTest
 		assertEquals(DataDeletion.Outcome.DELETED, result().outcome);
 
 		// A second 401 with a fresh token is a failure, not a loop.
-		DataDeletion again = new DataDeletion(server.client(), gson, FakeServer.BASE, identity, uploader,
-			() -> connected.set(false));
+		DataDeletion again = new DataDeletion(api, gson, identity, uploader, () -> connected.set(false));
 		connected.set(true);
 		identity.setToken(identity.installId(), tok('d'));
 		server.on(ME, status(401), status(401));
@@ -273,6 +300,8 @@ public class DataDeletionTest
 		assertTrue(older.startsWith("Your shared data was deleted."));
 		assertTrue(older.contains("old-1, old-2") && older.contains("those ids") && older.contains("Privacy notice"));
 		assertFalse(DataDeletion.message(new DataDeletion.Result(DataDeletion.Outcome.FAILED, 500, null,
+			Collections.singletonList("old-1"))).contains("old-1"));
+		assertFalse(DataDeletion.message(new DataDeletion.Result(DataDeletion.Outcome.NOT_CONNECTED, -1, null,
 			Collections.singletonList("old-1"))).contains("old-1"));
 	}
 }

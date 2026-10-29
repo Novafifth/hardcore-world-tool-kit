@@ -192,6 +192,25 @@ final class FakeServer
 			.build();
 	}
 
+	/** The plugin's request methods over this fake server, with the Connect setting read from {@code connected}. */
+	ServerApi api(Gson gson, BooleanSupplier connected)
+	{
+		return new ServerApi(client(), gson, BASE, config(connected));
+	}
+
+	/** Settings with Connect read from {@code connected}; everything else at its default (Share my trades on). */
+	static HardcoreWorldToolKitConfig config(BooleanSupplier connected)
+	{
+		return new HardcoreWorldToolKitConfig()
+		{
+			@Override
+			public boolean connected()
+			{
+				return connected.getAsBoolean();
+			}
+		};
+	}
+
 	Seen next() throws InterruptedException
 	{
 		Seen s = requests.poll(5, TimeUnit.SECONDS);

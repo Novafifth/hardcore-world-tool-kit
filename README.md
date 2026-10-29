@@ -58,8 +58,8 @@ Under **Configuration > Hardcore World Tool Kit**, or the gear button in the pan
 - Once connected, the plugin shares your own Hardcore World Grand Exchange trades and open offers (item, price,
   quantity, time). They are sent with a random install id and a hashed account id. Your name is never sent, and the
   server never stores IP addresses.
-- **Delete my shared data** in the panel removes everything your computer has shared. You can turn sharing off at any
-  time.
+- **Delete my shared data** in the panel (while connected) removes everything your computer has shared. You can turn
+  sharing off at any time.
 - The full privacy notice:
   [hardcore-ge-tracker-107023686748.europe-north1.run.app/privacy/hardcore](https://hardcore-ge-tracker-107023686748.europe-north1.run.app/privacy/hardcore)
 

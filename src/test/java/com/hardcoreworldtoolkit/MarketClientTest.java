@@ -5,9 +5,11 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import com.google.gson.Gson;
+import java.util.Collections;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import okhttp3.HttpUrl;
 import okhttp3.OkHttpClient;
 import okhttp3.Protocol;
@@ -18,7 +20,11 @@ import org.junit.Test;
 
 public class MarketClientTest
 {
+	private static final HttpUrl BASE = HttpUrl.get("http://localhost:1");
+
 	private final BlockingQueue<Request> requests = new LinkedBlockingQueue<>();
+	/** The Connect setting. */
+	private final AtomicBoolean connected = new AtomicBoolean(true);
 
 	private MarketClient market()
 	{
@@ -30,7 +36,26 @@ public class MarketClientTest
 					.body(ResponseBody.create(null, "{}")).build();
 			})
 			.build();
-		return new MarketClient(http, new Gson(), HttpUrl.get("http://localhost:1"), 9000);
+		Gson gson = new Gson();
+		return new MarketClient(new ServerApi(http, gson, BASE, FakeServer.config(connected::get)), gson, BASE, 9000);
+	}
+
+	@Test
+	public void nothingIsSentWhileDisconnected() throws InterruptedException
+	{
+		connected.set(false);
+		MarketClient m = market();
+		BlockingQueue<String> errors = new LinkedBlockingQueue<>();
+		m.recent(0, r -> errors.add("sent"), errors::add);
+		m.item(4151, false, d -> errors.add("sent"), errors::add);
+		m.series(4151, "24h", "5m", false, s -> errors.add("sent"), errors::add);
+		m.itemAsync(4151, d -> errors.add("sent"), errors::add);
+		m.items(Collections.singletonList(4151), false, r -> errors.add("sent"), errors::add);
+		for (int i = 0; i < 5; i++)
+		{
+			assertEquals(MarketClient.NOT_CONNECTED, errors.poll(5, TimeUnit.SECONDS));
+		}
+		assertNull("nothing sent", requests.poll(200, TimeUnit.MILLISECONDS));
 	}
 
 	private Request next() throws InterruptedException
@@ -167,6 +192,7 @@ public class MarketClientTest
 		assertEquals("server unreachable", MarketClient.shortReason(MarketClient.UNREACHABLE));
 		assertEquals("server error 503", MarketClient.shortReason(MarketClient.serverError(503)));
 		assertEquals("bad response", MarketClient.shortReason(MarketClient.BAD_RESPONSE));
+		assertEquals("not connected", MarketClient.shortReason(MarketClient.NOT_CONNECTED));
 		assertEquals("Something else", MarketClient.shortReason("Something else."));
 		assertEquals("unknown error", MarketClient.shortReason(null));
 	}

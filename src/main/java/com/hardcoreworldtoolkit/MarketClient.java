@@ -9,18 +9,16 @@ import java.util.concurrent.Executor;
 import java.util.function.Consumer;
 import javax.swing.SwingUtilities;
 import lombok.extern.slf4j.Slf4j;
-import okhttp3.CacheControl;
 import okhttp3.Call;
 import okhttp3.Callback;
 import okhttp3.HttpUrl;
-import okhttp3.OkHttpClient;
-import okhttp3.Request;
 import okhttp3.Response;
 import okhttp3.ResponseBody;
 
 /**
- * Read side of the collection server. Requests run on OkHttp's pool; the public methods deliver their callbacks on the
- * Swing EDT, the package-private ones ({@link #itemAsync}, {@link #items}) on the OkHttp thread.
+ * Read side of the collection server. Requests go through {@link ServerApi#getMarketData} (only while connected;
+ * otherwise {@code err} gets {@link #NOT_CONNECTED}) and run on OkHttp's pool; the public methods deliver their
+ * callbacks on the Swing EDT, the package-private ones ({@link #itemAsync}, {@link #items}) on the OkHttp thread.
  */
 @Slf4j
 public class MarketClient
@@ -36,6 +34,8 @@ public class MarketClient
 	/** Error messages passed to the {@code err} callbacks; {@link #shortReason} makes a status-line version. */
 	public static final String UNREACHABLE = "Can't reach the Hardcore World Tool Kit server.";
 	public static final String BAD_RESPONSE = "Unexpected server response.";
+	/** Nothing was sent: the Connect setting is off. */
+	public static final String NOT_CONNECTED = "Not connected to the Hardcore World Tool Kit server.";
 	private static final String SERVER_ERROR_PREFIX = "Server error (";
 	/**
 	 * Opt-in extra fields: confirmed / trusted figures and fill-only last prices. Older servers ignore the parameter
@@ -46,14 +46,14 @@ public class MarketClient
 	/** Runs callbacks on the OkHttp thread that received the response. */
 	private static final Executor DIRECT = Runnable::run;
 
-	private final OkHttpClient http;
+	private final ServerApi api;
 	private final Gson gson;
 	private final HttpUrl base;
 	private final int world;
 
-	MarketClient(OkHttpClient http, Gson gson, HttpUrl base, int world)
+	MarketClient(ServerApi api, Gson gson, HttpUrl base, int world)
 	{
-		this.http = http;
+		this.api = api;
 		this.gson = gson;
 		this.base = base;
 		this.world = world;
@@ -124,8 +124,8 @@ public class MarketClient
 	}
 
 	/**
-	 * A few words for a status line from an error message: "server unreachable", "server error 500" or "bad
-	 * response"; anything else as given, without a trailing period.
+	 * A few words for a status line from an error message: "server unreachable", "server error 500", "bad response"
+	 * or "not connected"; anything else as given, without a trailing period.
 	 */
 	public static String shortReason(String message)
 	{
@@ -136,6 +136,10 @@ public class MarketClient
 		if (UNREACHABLE.equals(message))
 		{
 			return "server unreachable";
+		}
+		if (NOT_CONNECTED.equals(message))
+		{
+			return "not connected";
 		}
 		if (BAD_RESPONSE.equals(message))
 		{
@@ -160,12 +164,7 @@ public class MarketClient
 	private <T> void get(HttpUrl.Builder url, boolean fresh, Class<T> type, Executor callbacks, Consumer<T> ok,
 		Consumer<String> err)
 	{
-		Request.Builder req = new Request.Builder().url(url.build()).get();
-		if (fresh)
-		{
-			req.cacheControl(CacheControl.FORCE_NETWORK);
-		}
-		http.newCall(req.build()).enqueue(new Callback()
+		Callback callback = new Callback()
 		{
 			@Override
 			public void onFailure(Call call, IOException e)
@@ -200,6 +199,14 @@ public class MarketClient
 					callbacks.execute(() -> err.accept(BAD_RESPONSE));
 				}
 			}
-		});
+		};
+		try
+		{
+			api.getMarketData(url.build(), fresh, callback);
+		}
+		catch (ServerApi.NotConnectedException e)
+		{
+			callbacks.execute(() -> err.accept(NOT_CONNECTED));
+		}
 	}
 }

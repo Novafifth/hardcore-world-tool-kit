@@ -248,9 +248,11 @@ public class HardcoreWorldToolKitPlugin extends Plugin
 		// real ones; read it now on the executor, off the client thread and the EDT.
 		store.useDataDir(this::getPluginDirectory, IdentityFile.fileNameFor(base, HttpUrl.get(PRODUCTION_SERVER_URL)));
 		executor.execute(store::loadIdentity);
+		// Every HTTP request goes through this; each request method sends nothing while the Connect setting is off.
+		ServerApi api = new ServerApi(okHttpClient, gson, base, config);
 		// Uploads carry the install token (registering first); nothing, registration included, is sent unless
 		// connected and sharing.
-		TradeUploader up = new TradeUploader(okHttpClient, gson, base, this::onUploaded, store, this::shareEnabled);
+		TradeUploader up = new TradeUploader(api, gson, this::onUploaded, store, this::shareEnabled);
 		uploader = up;
 		// Uploads left over from the last session (RuneLite closed, server down) go back in
 		// the queue; they are only sent if connected and sharing, like everything else.
@@ -265,11 +267,11 @@ public class HardcoreWorldToolKitPlugin extends Plugin
 				log.debug("Restored {} pending uploads", back.size());
 			}
 		});
-		deletion = new DataDeletion(okHttpClient, gson, base, store, up,
+		deletion = new DataDeletion(api, gson, store, up,
 			() -> configManager.setConfiguration(HardcoreWorldToolKitConfig.GROUP, HardcoreWorldToolKitConfig.KEY_CONNECTED, false));
 		store.reset();
 		flushTask = executor.scheduleWithFixedDelay(this::scheduledFlush, 15, 30, TimeUnit.SECONDS);
-		MarketClient market = new MarketClient(okHttpClient, gson, base, HARDCORE_ECONOMY);
+		MarketClient market = new MarketClient(api, gson, base, HARDCORE_ECONOMY);
 		geQuotes = new ItemQuoteCache(market::itemAsync);
 		offerWatch = new OfferMarketWatch(market::items, System::currentTimeMillis, config::connected,
 			() -> config.offerNotification().isEnabled(), this::panelShown, () -> config.staleHours() * 3600L, myTrades::snapshot,
