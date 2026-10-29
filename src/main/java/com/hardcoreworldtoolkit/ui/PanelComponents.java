@@ -53,6 +53,8 @@ final class PanelComponents
 	static final Color HC_TEXT = new Color(0xf0654f);
 	/** The dark red behind the header strip. */
 	static final Color HC_DARK = new Color(0x2c1715);
+	/** Discord's blurple, for the Discord button. */
+	static final Color DISCORD = new Color(0x5865f2);
 	/** The underline of the tabs that aren't selected. */
 	private static final Color TAB_TRACK = new Color(0x3a3a3a);
 	/** Client property of a tab button: whether it is the selected one. */

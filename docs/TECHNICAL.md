@@ -23,7 +23,9 @@ short overview, see the [README](../README.md).
     the old data stays);
   - an item view with your open offers for the item, stats, a price chart (24h / 7d / 30d / 90d / 1y), the
     open-offer book, recent trades from all players, your own trades and your profit on the item. Your own
-    offers and fills show up there immediately; new trades are briefly highlighted.
+    offers and fills show up there immediately; new trades are briefly highlighted;
+  - a *Join the Discord* button pinned at the bottom, which opens the Hardcore World Tool Kit Discord invite
+    (`discord.com/invite/a2dfkSYw2j`) in your browser. The plugin sends nothing to Discord.
 - Opens the item in the panel when you set up a GE offer for it (can be turned off).
 - While connected, adds a line to the GE offer setup's item text with the Hardcore prices: last bought / sold, best
   bid / ask and units traded in the last 24 hours, e.g. `HC last 1.25M/1.24M · bid 1.23M ask 1.26M · 523/24h` (the

@@ -52,7 +52,8 @@ import okhttp3.HttpUrl;
 
 /**
  * Side panel: the header strip, item search with a settings (gear) button, connection status, then the market feed /
- * your trades, or a per-item view with price chart. Settings live on RuneLite's configuration page.
+ * your trades, or a per-item view with price chart, and a Discord button pinned at the bottom. Settings live on
+ * RuneLite's configuration page.
  * This class owns the header, the cards, the refresh timer and the 1 s ticker; the views render each card.
  */
 public class HardcoreWorldToolKitPanel extends PluginPanel
@@ -118,6 +119,8 @@ public class HardcoreWorldToolKitPanel extends PluginPanel
 	private final OffersSection offersSection;
 	private final ProfitSection profitSection;
 	private final HomeView homeView;
+	/** What the sidebar shows: the scrolling panel with the Discord button pinned under it. Built on first use. */
+	private JPanel pinned;
 	private final ItemView itemView;
 	private final Timer refreshTimer;
 	private final Timer searchDebounce;
@@ -251,6 +254,20 @@ public class HardcoreWorldToolKitPanel extends PluginPanel
 		refreshTimer = new Timer(REFRESH_MS, e -> refresh());
 		ticker = new Timer(TICK_MS, e -> tick());
 		onConfigChanged();
+	}
+
+	/** The Discord button stays at the bottom of the sidebar while the panel above it scrolls. */
+	@Override
+	public JPanel getWrappedPanel()
+	{
+		if (pinned == null)
+		{
+			pinned = new JPanel(new BorderLayout());
+			pinned.add(super.getWrappedPanel(), BorderLayout.CENTER);
+			pinned.add(new DiscordFooter(() -> LinkBrowser.browse(DiscordFooter.INVITE_URL)).getComponent(),
+				BorderLayout.SOUTH);
+		}
+		return pinned;
 	}
 
 	/** The header strip, then search + gear, then the connection status line. */

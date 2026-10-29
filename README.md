@@ -74,7 +74,8 @@ No. It only does anything on the Hardcore Worlds.
 
 ## Feedback
 
-Found a bug or have an idea? [Open an issue](https://github.com/Novafifth/hardcore-world-tool-kit/issues), or message
-**@Novith** on Discord.
+Found a bug or have an idea? Join the [Hardcore World Tool Kit Discord](https://discord.com/invite/a2dfkSYw2j) (the
+button at the bottom of the panel), [open an issue](https://github.com/Novafifth/hardcore-world-tool-kit/issues), or
+message **@Novith** on Discord.
 
 How it all works in detail: [docs/TECHNICAL.md](docs/TECHNICAL.md).

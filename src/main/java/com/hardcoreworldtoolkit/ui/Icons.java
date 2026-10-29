@@ -10,6 +10,7 @@ import java.awt.geom.Area;
 import java.awt.geom.Ellipse2D;
 import java.awt.geom.Path2D;
 import java.awt.geom.Rectangle2D;
+import java.awt.geom.RoundRectangle2D;
 import java.awt.image.BufferedImage;
 import javax.swing.ImageIcon;
 import net.runelite.client.ui.ColorScheme;
@@ -19,12 +20,14 @@ import net.runelite.client.ui.ColorScheme;
  */
 final class Icons
 {
+	private static final int CHAT_SIZE = 14;
 	private static final int COG_SIZE = 14;
 	private static final int COG_TEETH = 8;
 	private static final int DOT_SIZE = 8;
 	private static final int REFRESH_SIZE = 12;
 	private static final int SKULL_SIZE = 22;
 
+	private static ImageIcon chat;
 	private static ImageIcon cog;
 	private static ImageIcon dotOn;
 	private static ImageIcon dotOff;
@@ -33,6 +36,16 @@ final class Icons
 
 	private Icons()
 	{
+	}
+
+	/** A speech bubble in Discord's blurple, for the Discord button. */
+	static ImageIcon chat()
+	{
+		if (chat == null)
+		{
+			chat = new ImageIcon(drawChat(CHAT_SIZE, PanelComponents.DISCORD));
+		}
+		return chat;
 	}
 
 	/** The plugin's skull, for the header. */
@@ -81,6 +94,32 @@ final class Icons
 			dotOff = new ImageIcon(drawDot(DOT_SIZE, ColorScheme.LIGHT_GRAY_COLOR, false));
 		}
 		return dotOff;
+	}
+
+	static BufferedImage drawChat(int size, Color color)
+	{
+		BufferedImage img = new BufferedImage(size, size, BufferedImage.TYPE_INT_ARGB);
+		Graphics2D g = img.createGraphics();
+		g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+		double s = size;
+		// A rounded bubble with a tail at its bottom left and three dots cut out of it.
+		Area bubble = new Area(new RoundRectangle2D.Double(0, s * 0.06, s, s * 0.68, s * 0.42, s * 0.42));
+		Path2D.Double tail = new Path2D.Double();
+		tail.moveTo(s * 0.20, s * 0.66);
+		tail.lineTo(s * 0.14, s * 0.98);
+		tail.lineTo(s * 0.50, s * 0.70);
+		tail.closePath();
+		bubble.add(new Area(tail));
+		double dot = Math.max(1.6, s * 0.15);
+		for (int i = 0; i < 3; i++)
+		{
+			double cx = s * (0.28 + 0.22 * i);
+			bubble.subtract(new Area(new Ellipse2D.Double(cx - dot / 2, s * 0.40 - dot / 2, dot, dot)));
+		}
+		g.setColor(color);
+		g.fill(bubble);
+		g.dispose();
+		return img;
 	}
 
 	static BufferedImage drawCog(int size, Color color)
