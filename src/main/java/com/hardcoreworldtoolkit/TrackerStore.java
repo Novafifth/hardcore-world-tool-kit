@@ -1,0 +1,249 @@
+package com.hardcoreworldtoolkit;
+
+import com.google.gson.Gson;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.UUID;
+import java.util.function.Consumer;
+import java.util.function.Supplier;
+import javax.inject.Inject;
+import lombok.extern.slf4j.Slf4j;
+import net.runelite.client.config.ConfigManager;
+
+/**
+ * Per-account offer state and GE History signatures (in the RuneLite profile config), plus the install id and install
+ * token ({@link ServerIdentity}, in a file in the plugin's data folder: {@link IdentityFile}). Each account / game mode
+ * has its own RuneLite profile.
+ */
+@Slf4j
+class TrackerStore implements ServerIdentity
+{
+	private static final String KEY_SLOT = "slot";
+	private static final String KEY_COMPLETED = "completed";
+	private static final String KEY_HISTORY = "history";
+	/** Length of a UUID string; anything else stored under the install id key is replaced. */
+	static final int INSTALL_ID_LENGTH = 36;
+
+	private final ConfigManager configManager;
+	private final Gson gson;
+	private final InstallIdentity identity;
+	private final IdentityFile identityFile;
+	/** The plugin's data folder (set in startUp, before anything uses the identity). */
+	private volatile ProfitStore.Dir dataDir;
+	/** Read on the client thread, reset from startUp/shutDown. */
+	private volatile String loadedProfile;
+
+	@Inject
+	TrackerStore(ConfigManager configManager, Gson gson)
+	{
+		this.configManager = configManager;
+		this.gson = gson;
+		this.identityFile = new IdentityFile(() ->
+		{
+			ProfitStore.Dir d = dataDir;
+			if (d == null)
+			{
+				throw new IOException("no data folder yet");
+			}
+			return d.get();
+		}, gson);
+		this.identity = new InstallIdentity(identityFile, () -> UUID.randomUUID().toString());
+	}
+
+	/**
+	 * Where the install id and token file lives (the plugin's data folder) and its name ({@link IdentityFile#fileNameFor}:
+	 * one per server). Call before using the identity.
+	 */
+	void useDataDir(ProfitStore.Dir dir, String identityFileName)
+	{
+		this.dataDir = dir;
+		identityFile.useFileName(identityFileName);
+	}
+
+	/** Reads the identity file now (off the client thread and the EDT: the executor at startUp). */
+	void loadIdentity()
+	{
+		identity.token();
+	}
+
+	/**
+	 * Whether this PC holds a token, without reading the file when that hasn't happened yet (EDT callers; startUp
+	 * reads it on the executor right away).
+	 */
+	boolean hasToken()
+	{
+		synchronized (identity)
+		{
+			return identityFile.loaded() && identity.token() != null;
+		}
+	}
+
+	/** Forget which profile was loaded, so the next {@link #ensureLoaded} reads it again. */
+	void reset()
+	{
+		loadedProfile = null;
+	}
+
+	/** Load slot state for the current account into {@code tracker}, unless it's already loaded. */
+	boolean ensureLoaded(OfferTracker tracker)
+	{
+		String profile = configManager.getRSProfileKey();
+		if (profile == null)
+		{
+			return false;
+		}
+		if (profile.equals(loadedProfile))
+		{
+			return true;
+		}
+		for (int slot = 0; slot < OfferTracker.SLOTS; slot++)
+		{
+			String json = configManager.getRSProfileConfiguration(HardcoreWorldToolKitConfig.GROUP, KEY_SLOT + slot);
+			OfferTracker.SlotState state = null;
+			if (json != null)
+			{
+				try
+				{
+					state = gson.fromJson(json, OfferTracker.SlotState.class);
+				}
+				catch (RuntimeException ex)
+				{
+					log.debug("Bad saved slot {}", slot, ex);
+				}
+			}
+			tracker.setSlot(slot, state);
+		}
+		tracker.setCompleted(loadList(KEY_COMPLETED));
+		loadedProfile = profile;
+		return true;
+	}
+
+	void saveSlot(OfferTracker tracker, int slot)
+	{
+		OfferTracker.SlotState s = tracker.getSlot(slot);
+		if (s == null)
+		{
+			configManager.unsetRSProfileConfiguration(HardcoreWorldToolKitConfig.GROUP, KEY_SLOT + slot);
+		}
+		else
+		{
+			setProfileValue(KEY_SLOT + slot, gson.toJson(s));
+		}
+	}
+
+	void saveCompleted(OfferTracker tracker)
+	{
+		setProfileValue(KEY_COMPLETED, gson.toJson(tracker.getCompleted()));
+	}
+
+	/** Row signatures from the last GE History read, newest first. */
+	List<String> loadHistory()
+	{
+		return loadList(KEY_HISTORY);
+	}
+
+	/**
+	 * True once this account's GE History has been read at least once. {@link #saveHistory} always writes the key
+	 * (even an empty list), so players who imported before this existed count too. Needs a loaded profile.
+	 */
+	boolean historyImported()
+	{
+		return configManager.getRSProfileConfiguration(HardcoreWorldToolKitConfig.GROUP, KEY_HISTORY) != null;
+	}
+
+	/** The RS profile {@link #ensureLoaded} last loaded, or null. */
+	String loadedProfile()
+	{
+		return loadedProfile;
+	}
+
+	void saveHistory(List<String> signatures)
+	{
+		setProfileValue(KEY_HISTORY, gson.toJson(signatures));
+	}
+
+	/**
+	 * Random id for this RuneLite install (pseudonymous: the server stores it with the hashed account id). Never the
+	 * player's name. Synchronized (in {@link InstallIdentity}) so that two first-run callers (the upload executor and a
+	 * shutdown flush) can't each create and save a different id.
+	 */
+	@Override
+	public String installId()
+	{
+		return identity.installId();
+	}
+
+	/** The install token, or null. Never log it. */
+	@Override
+	public String token()
+	{
+		return identity.token();
+	}
+
+	@Override
+	public void setToken(String installId, String token)
+	{
+		identity.setToken(installId, token);
+	}
+
+	@Override
+	public void clearToken(String installId)
+	{
+		identity.clearToken(installId);
+	}
+
+	@Override
+	public String rotateInstallId()
+	{
+		return identity.rotateInstallId();
+	}
+
+	@Override
+	public String replaceInstallId()
+	{
+		return identity.replaceInstallId();
+	}
+
+	@Override
+	public List<String> lostInstallIds()
+	{
+		return identity.lostInstallIds();
+	}
+
+	/** The stored id, or a new one (saved) when there is none or it isn't a UUID. Not atomic; callers lock. */
+	static String installId(Supplier<String> read, Consumer<String> write, Supplier<String> newId)
+	{
+		String id = read.get();
+		if (id == null || id.length() != INSTALL_ID_LENGTH)
+		{
+			id = newId.get();
+			write.accept(id);
+		}
+		return id;
+	}
+
+	private void setProfileValue(String key, String value)
+	{
+		configManager.setRSProfileConfiguration(HardcoreWorldToolKitConfig.GROUP, key, value);
+	}
+
+	private List<String> loadList(String key)
+	{
+		String json = configManager.getRSProfileConfiguration(HardcoreWorldToolKitConfig.GROUP, key);
+		if (json == null)
+		{
+			return new ArrayList<>();
+		}
+		try
+		{
+			String[] list = gson.fromJson(json, String[].class);
+			return list == null ? new ArrayList<>() : new ArrayList<>(Arrays.asList(list));
+		}
+		catch (RuntimeException ex)
+		{
+			return new ArrayList<>();
+		}
+	}
+}

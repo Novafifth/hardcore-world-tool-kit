@@ -1,8 +1,8 @@
-# Hardcore GETracker
+# Hardcore World Tool Kit
 
 Grand Exchange prices, trade history and offer alerts for Old School RuneScape's **Hardcore Worlds**.
 
-Hardcore Worlds have their own economy, so the main game's GE price guides don't apply there. Hardcore GETracker builds
+Hardcore Worlds have their own economy, so the main game's GE price guides don't apply there. Hardcore World Tool Kit builds
 a shared Hardcore price index from the trades of the players who use it, and keeps track of your own offers and
 trades. It stays idle on every other world.
 
@@ -30,18 +30,18 @@ side panel.
 
 ## Getting started
 
-1. Install **Hardcore GETracker** from the Plugin Hub and log in to a Hardcore World.
+1. Install **Hardcore World Tool Kit** from the Plugin Hub and log in to a Hardcore World.
 2. Open the panel (the skull icon in the sidebar) and follow the *Get started* card.
 3. Press **Connect** to see the shared market data. Your own trades work without it.
 4. Open your **GE History** tab once, so past trades are picked up.
 
 ## Settings
 
-Under **Configuration > Hardcore GETracker**, or the gear button in the panel.
+Under **Configuration > Hardcore World Tool Kit**, or the gear button in the panel.
 
 | Setting | Default | What it does |
 |---|---|---|
-| Connect to Hardcore GETracker server | Off | Shows the shared market data and shares your trades |
+| Connect to Hardcore World Tool Kit server | Off | Shows the shared market data and shares your trades |
 | Share my trades | On | What is shared while connected |
 | Open item when setting up a GE offer | On | Shows the item in the side panel |
 | Switch to this panel for GE offers | On | Off: the item still opens here, but whatever panel is open stays on top (handy with another price plugin) |
@@ -74,7 +74,7 @@ No. It only does anything on the Hardcore Worlds.
 
 ## Feedback
 
-Found a bug or have an idea? [Open an issue](https://github.com/Novafifth/hardcore-ge-tracker/issues), or message
+Found a bug or have an idea? [Open an issue](https://github.com/Novafifth/hardcore-world-tool-kit/issues), or message
 **@Novith** on Discord.
 
 How it all works in detail: [docs/TECHNICAL.md](docs/TECHNICAL.md).

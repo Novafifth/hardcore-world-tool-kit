@@ -1,4 +1,4 @@
-# Hardcore GETracker: technical details
+# Hardcore World Tool Kit: technical details
 
 Everything the plugin does, in detail: what is recorded, what is shared and how, and how to build and test it. For the
 short overview, see the [README](../README.md).
@@ -34,10 +34,10 @@ short overview, see the [README](../README.md).
 
 ## Settings
 
-All settings are on RuneLite's configuration page (**Configuration > Hardcore GETracker**, or the gear button in
+All settings are on RuneLite's configuration page (**Configuration > Hardcore World Tool Kit**, or the gear button in
 the panel):
 
-- **Data sharing**: *Connect to Hardcore GETracker server* (off by default; shows the warning below when turned on)
+- **Data sharing**: *Connect to Hardcore World Tool Kit server* (off by default; shows the warning below when turned on)
   and *Share my trades* (on once connected).
 - **Panel**: *Open item when setting up a GE offer*, *Switch to this panel for GE offers* (off: the item still opens
   in this panel, ready when you switch to it, but whatever panel is open stays on top) and *Right-click "HC prices"*
@@ -70,12 +70,12 @@ file. **Rebuild** (in the Profit section) recounts everything from the local tra
 The plugin only tracks the Hardcore Worlds: the worlds the game's world list marks with the `HARDCORE_MAIN` world type
 (`WorldType.HARDCORE_MAIN` in RuneLite's API). It uses no world numbers, so nothing needs updating when worlds are
 added or renumbered. All Hardcore Worlds share one economy, so trades are sent with the world field set to one fixed
-economy id (`HardcoreGeTrackerPlugin.HARDCORE_ECONOMY`, 9000) instead of the number of the world you were on, and the
+economy id (`HardcoreWorldToolKitPlugin.HARDCORE_ECONOMY`, 9000) instead of the number of the world you were on, and the
 server keeps one price index for them. Every other world is ignored.
 
 ## Opt-in data sharing
 
-Nothing contacts a server until you press **Connect** in the panel or turn on *Connect to Hardcore GETracker server*
+Nothing contacts a server until you press **Connect** in the panel or turn on *Connect to Hardcore World Tool Kit server*
 in the settings. Both ask you to confirm this warning first:
 
 > This feature submits your IP address to a 3rd-party server not controlled or verified by RuneLite developers.
@@ -94,7 +94,7 @@ view can show the new market data.
 **Share my trades** (on once connected) uploads:
 
 - a random install id (a UUID; the server stores it together with the hashed account id below);
-- a pseudonymous account id (hashed, not your name or RSN): the SHA-256 hash of `hardcore-ge-tracker:` followed by
+- a pseudonymous account id (hashed, not your name or RSN): the SHA-256 hash of `hardcore-world-tool-kit:` followed by
   RuneLite's account hash, so the server can keep one account's trades together without learning who you are. It is
   pseudonymous, not anonymous: it is the same for every upload of that account, and the server links it to the install
   id. The server's privacy notice (`<server>/privacy/hardcore`) says how long each is kept and how to delete them;
@@ -125,7 +125,7 @@ ignores anything it already has. The file is removed when nothing is waiting.
 which only sends the install id) and receives a random install token. Every upload carries it
 (`Authorization: Bearer ...`), so nobody else can upload, or delete data, under your install id. Registration is part
 of uploading: it only happens while connected with *Share my trades* on. The install id and the token are kept in
-`server-identity.json` in the plugin folder (`~/.runelite/plugin-data/hardcore-ge-tracker/`), not in the RuneLite
+`server-identity.json` in the plugin folder (`~/.runelite/plugin-data/hardcore-world-tool-kit/`), not in the RuneLite
 config: RuneLite logs config values it saves at debug level, passes them to every plugin, and syncs the config to its
 servers for players with a RuneLite account. So the token is never written to a log or synced, and each computer has
 its own install id. A developer-mode client talking to another server (the local test server) keeps a separate file
@@ -155,8 +155,8 @@ from trusted offers when the server sends them. Older servers ignore the paramet
 ## Local log
 
 **Save local trade log** is on by default and works without connecting. It appends one JSON object per line to a
-file per month (by the trade's time in UTC): `~/.runelite/plugin-data/hardcore-ge-tracker/trades-YYYY-MM.jsonl`
-(`%USERPROFILE%\.runelite\plugin-data\hardcore-ge-tracker\trades-YYYY-MM.jsonl` on Windows). Each line also carries
+file per month (by the trade's time in UTC): `~/.runelite/plugin-data/hardcore-world-tool-kit/trades-YYYY-MM.jsonl`
+(`%USERPROFILE%\.runelite\plugin-data\hardcore-world-tool-kit\trades-YYYY-MM.jsonl` on Windows). Each line also carries
 `acct`, the same pseudonymous account id as above, so per-account numbers can be rebuilt from the log.
 
 The profit totals are kept in `profit-<id>.json` files in the same folder (see [Profit](#profit)); they are updated
@@ -173,19 +173,19 @@ recorded the next time you log in and are marked late.
 Requires JDK 11.
 
 - `./gradlew test` runs the unit tests. `ServerContractTest` is skipped unless the environment variable
-  `HGT_CONTRACT_SERVER` holds the base URL of a running collection server; it then registers, uploads, reads and
+  `HWTK_CONTRACT_SERVER` holds the base URL of a running collection server; it then registers, uploads, reads and
   deletes against it with the plugin's own classes.
 - `./gradlew run` starts a developer-mode RuneLite client with the plugin loaded. To log in with a Jagex account, follow
   [Using Jagex Accounts](https://github.com/runelite/runelite/wiki/Using-Jagex-Accounts).
 - `./gradlew shadowJar` builds a standalone jar.
 
-The server address is fixed in code (`HardcoreGeTrackerPlugin.PRODUCTION_SERVER_URL`); players can't change it. Only a
-developer-mode client (`./gradlew run`) uses a local server, or the one given with `-Dhardcoregetracker.server=<url>`.
+The server address is fixed in code (`HardcoreWorldToolKitPlugin.PRODUCTION_SERVER_URL`); players can't change it. Only a
+developer-mode client (`./gradlew run`) uses a local server, or the one given with `-Dhardcoreworldtoolkit.server=<url>`.
 
 **Developer mode only:**
 
-- `::hgt fresh` shows the panel as a brand-new install sees it (UI only; nothing real changes), `::hgt fresh off` ends
-  it, and `::hgt hints` re-arms the one-time chat hint. The command is registered only in developer mode.
-- `-Dhardcoregetracker.anyWorld=true` treats every world as a Hardcore World, so the plugin can be tried on a normal
+- `::hwtk fresh` shows the panel as a brand-new install sees it (UI only; nothing real changes), `::hwtk fresh off` ends
+  it, and `::hwtk hints` re-arms the one-time chat hint. The command is registered only in developer mode.
+- `-Dhardcoreworldtoolkit.anyWorld=true` treats every world as a Hardcore World, so the plugin can be tried on a normal
   world. It only takes effect with a server other than the production one (for example a local server from `server/`
   with `npm run dev`), so trades from a normal world can never reach the real price index.
