@@ -23,7 +23,9 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTextArea;
 import javax.swing.SwingConstants;
+import javax.swing.border.CompoundBorder;
 import javax.swing.border.EmptyBorder;
+import javax.swing.border.MatteBorder;
 import net.runelite.client.game.ItemManager;
 import net.runelite.client.ui.ColorScheme;
 import net.runelite.client.ui.FontManager;
@@ -45,6 +47,16 @@ final class PanelComponents
 	static final Color ALERT = new Color(0xe0503a);
 	/** An offer hasn't filled for a long time. */
 	static final Color STALE = new Color(0xd8a634);
+	/** The Hardcore accent: bars and underlines. */
+	static final Color HC_RED = new Color(0xc8372d);
+	/** A red that reads as text on the dark panel. */
+	static final Color HC_TEXT = new Color(0xf0654f);
+	/** The dark red behind the header strip. */
+	static final Color HC_DARK = new Color(0x2c1715);
+	/** The underline of the tabs that aren't selected. */
+	private static final Color TAB_TRACK = new Color(0x3a3a3a);
+	/** Client property of a tab button: whether it is the selected one. */
+	private static final String TAB_ON = "hardcoregetracker.tabOn";
 	/** Price levels shown per side of the order book. */
 	private static final int BOOK_DEPTH = 8;
 
@@ -220,24 +232,57 @@ final class PanelComponents
 		return p;
 	}
 
+	/** A flat tab: text over an underline that {@link #styleTab} makes red on the selected one. */
 	static JButton tabButton(String text)
 	{
 		JButton b = new JButton(text);
 		b.setFocusPainted(false);
+		b.setContentAreaFilled(false);
+		b.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+		b.addMouseListener(new MouseAdapter()
+		{
+			@Override
+			public void mouseEntered(MouseEvent e)
+			{
+				b.setForeground(Color.WHITE);
+			}
+
+			@Override
+			public void mouseExited(MouseEvent e)
+			{
+				styleTab(b, Boolean.TRUE.equals(b.getClientProperty(TAB_ON)));
+			}
+		});
+		styleTab(b, false);
 		return b;
 	}
 
 	static void styleTab(JButton b, boolean on)
 	{
-		b.setForeground(on ? ColorScheme.BRAND_ORANGE : ColorScheme.LIGHT_GRAY_COLOR);
+		b.putClientProperty(TAB_ON, on);
+		b.setForeground(on ? Color.WHITE : ColorScheme.LIGHT_GRAY_COLOR);
+		b.setBorder(new CompoundBorder(new MatteBorder(0, 0, 2, 0, on ? HC_RED : TAB_TRACK), new EmptyBorder(5, 4, 4, 4)));
 	}
 
+	/** The one call to action on a card, e.g. Connect. */
+	static JButton primaryButton(String text)
+	{
+		JButton b = new JButton(text);
+		b.setFont(FontManager.getRunescapeBoldFont());
+		b.setBackground(HC_RED);
+		b.setForeground(Color.WHITE);
+		b.setFocusPainted(false);
+		return b;
+	}
+
+	/** A section title with a red bar on its left. */
 	static JLabel sectionLabel(String text)
 	{
 		JLabel l = new JLabel(text);
 		l.setFont(FontManager.getRunescapeBoldFont());
-		l.setForeground(ColorScheme.LIGHT_GRAY_COLOR);
-		l.setBorder(new EmptyBorder(2, 0, 4, 0));
+		l.setForeground(Color.WHITE);
+		l.setBorder(new CompoundBorder(new EmptyBorder(2, 0, 4, 0),
+			new CompoundBorder(new MatteBorder(0, 3, 0, 0, HC_RED), new EmptyBorder(0, 6, 0, 0))));
 		l.setAlignmentX(Component.LEFT_ALIGNMENT);
 		return l;
 	}
@@ -288,7 +333,7 @@ final class PanelComponents
 			@Override
 			public void mouseEntered(MouseEvent e)
 			{
-				l.setForeground(ColorScheme.BRAND_ORANGE);
+				l.setForeground(HC_TEXT);
 			}
 
 			@Override

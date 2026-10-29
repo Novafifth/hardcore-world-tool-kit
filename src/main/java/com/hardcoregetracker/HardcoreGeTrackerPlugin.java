@@ -2,13 +2,10 @@ package com.hardcoregetracker;
 
 import com.hardcoregetracker.ui.HardcoreGeTrackerPanel;
 import com.hardcoregetracker.ui.SharedDataActions;
+import com.hardcoregetracker.ui.SkullIcon;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.inject.Provides;
-import java.awt.BasicStroke;
-import java.awt.Color;
-import java.awt.Graphics2D;
-import java.awt.RenderingHints;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.time.Clock;
@@ -1302,16 +1299,7 @@ public class HardcoreGeTrackerPlugin extends Plugin
 
 	private static BufferedImage buildIcon()
 	{
-		BufferedImage img = new BufferedImage(16, 16, BufferedImage.TYPE_INT_ARGB);
-		Graphics2D g = img.createGraphics();
-		g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-		g.setColor(new Color(0xb3261e));
-		g.fillOval(0, 0, 16, 16);
-		g.setColor(new Color(0x2b2b2b));
-		g.setStroke(new BasicStroke(1.8f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
-		g.drawPolyline(new int[]{3, 6, 9, 13}, new int[]{11, 7, 9, 4}, 4);
-		g.dispose();
-		return img;
+		return SkullIcon.draw(16, SkullIcon.BONE);
 	}
 
 	/** @return true if the lines were written */

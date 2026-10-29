@@ -23,14 +23,26 @@ final class Icons
 	private static final int COG_TEETH = 8;
 	private static final int DOT_SIZE = 8;
 	private static final int REFRESH_SIZE = 12;
+	private static final int SKULL_SIZE = 22;
 
 	private static ImageIcon cog;
 	private static ImageIcon dotOn;
 	private static ImageIcon dotOff;
 	private static ImageIcon refresh;
+	private static ImageIcon skull;
 
 	private Icons()
 	{
+	}
+
+	/** The plugin's skull, for the header. */
+	static ImageIcon skull()
+	{
+		if (skull == null)
+		{
+			skull = new ImageIcon(SkullIcon.draw(SKULL_SIZE, SkullIcon.BONE));
+		}
+		return skull;
 	}
 
 	/** A settings cog. */

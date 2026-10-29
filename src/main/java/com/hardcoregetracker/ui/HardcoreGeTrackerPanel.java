@@ -51,7 +51,7 @@ import net.runelite.http.api.item.ItemPrice;
 import okhttp3.HttpUrl;
 
 /**
- * Side panel: item search with a settings (gear) button, connection status, then the market feed /
+ * Side panel: the header strip, item search with a settings (gear) button, connection status, then the market feed /
  * your trades, or a per-item view with price chart. Settings live on RuneLite's configuration page.
  * This class owns the header, the cards, the refresh timer and the 1 s ticker; the views render each card.
  */
@@ -253,10 +253,12 @@ public class HardcoreGeTrackerPanel extends PluginPanel
 		onConfigChanged();
 	}
 
-	/** Search + gear, then the connection status line. */
+	/** The header strip, then search + gear, then the connection status line. */
 	private JPanel buildNorth(Runnable openConfig)
 	{
 		JPanel north = column();
+		north.add(new HeaderBanner().getComponent());
+		north.add(Box.createVerticalStrut(6));
 
 		JPanel searchRow = new JPanel(new BorderLayout(4, 0));
 		searchRow.setOpaque(false);

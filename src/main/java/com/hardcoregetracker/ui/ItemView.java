@@ -15,6 +15,8 @@ import static com.hardcoregetracker.ui.PanelComponents.sectionLabel;
 import static com.hardcoregetracker.ui.PanelComponents.sideColor;
 import static com.hardcoregetracker.ui.PanelComponents.smallLabel;
 import static com.hardcoregetracker.ui.PanelComponents.stat;
+import static com.hardcoregetracker.ui.PanelComponents.styleTab;
+import static com.hardcoregetracker.ui.PanelComponents.tabButton;
 import static com.hardcoregetracker.ui.PanelComponents.wrapText;
 import com.hardcoregetracker.ActiveOffer;
 import com.hardcoregetracker.HardcoreGeTrackerConfig;
@@ -30,7 +32,6 @@ import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.GridLayout;
-import java.awt.Insets;
 import java.awt.Point;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -273,21 +274,19 @@ class ItemView
 
 	private JComponent buildRangeButtons()
 	{
-		JPanel row = new JPanel(new GridLayout(1, ChartRange.values().length, 2, 0));
+		JPanel row = new JPanel(new GridLayout(1, ChartRange.values().length, 0, 0));
 		row.setOpaque(false);
 		for (ChartRange r : ChartRange.values())
 		{
-			JButton b = new JButton(r.label());
-			b.setMargin(new Insets(1, 0, 1, 0));
+			JButton b = tabButton(r.label());
 			b.setFont(FontManager.getRunescapeSmallFont());
-			b.setFocusPainted(false);
 			b.addActionListener(e -> selectRange(r));
 			rangeButtons[r.ordinal()] = b;
 			row.add(b);
 		}
 		styleRangeButtons();
 		row.setAlignmentX(Component.LEFT_ALIGNMENT);
-		row.setMaximumSize(new Dimension(Integer.MAX_VALUE, 22));
+		row.setMaximumSize(new Dimension(Integer.MAX_VALUE, 26));
 		return row;
 	}
 
@@ -295,7 +294,7 @@ class ItemView
 	{
 		for (ChartRange r : ChartRange.values())
 		{
-			rangeButtons[r.ordinal()].setForeground(r == range ? ColorScheme.BRAND_ORANGE : ColorScheme.LIGHT_GRAY_COLOR);
+			styleTab(rangeButtons[r.ordinal()], r == range);
 		}
 	}
 
@@ -515,7 +514,7 @@ class ItemView
 			case SELL:
 				return SELL;
 			default:
-				return ColorScheme.BRAND_ORANGE;
+				return SkullIcon.BONE;
 		}
 	}
 

@@ -31,7 +31,7 @@ side panel.
 ## Getting started
 
 1. Install **Hardcore GETracker** from the Plugin Hub and log in to a Hardcore World.
-2. Open the panel (the coin icon in the sidebar) and follow the *Get started* card.
+2. Open the panel (the skull icon in the sidebar) and follow the *Get started* card.
 3. Press **Connect** to see the shared market data. Your own trades work without it.
 4. Open your **GE History** tab once, so past trades are picked up.
 

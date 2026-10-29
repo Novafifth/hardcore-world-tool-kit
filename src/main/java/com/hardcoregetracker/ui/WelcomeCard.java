@@ -2,6 +2,7 @@ package com.hardcoregetracker.ui;
 
 import static com.hardcoregetracker.ui.PanelComponents.column;
 import static com.hardcoregetracker.ui.PanelComponents.linkLabel;
+import static com.hardcoregetracker.ui.PanelComponents.primaryButton;
 import static com.hardcoregetracker.ui.PanelComponents.smallLabel;
 import static com.hardcoregetracker.ui.PanelComponents.wrapText;
 import com.hardcoregetracker.HardcoreGeTrackerConfig;
@@ -18,7 +19,9 @@ import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.border.CompoundBorder;
 import javax.swing.border.EmptyBorder;
+import javax.swing.border.MatteBorder;
 import net.runelite.client.ui.ColorScheme;
 import net.runelite.client.ui.FontManager;
 
@@ -78,7 +81,7 @@ class WelcomeCard
 		this.onDismissNotice = onDismissNotice;
 		card.setOpaque(true);
 		card.setBackground(ColorScheme.DARKER_GRAY_COLOR);
-		card.setBorder(new EmptyBorder(8, 8, 8, 8));
+		card.setBorder(new CompoundBorder(new MatteBorder(0, 3, 0, 0, PanelComponents.HC_RED), new EmptyBorder(8, 8, 8, 8)));
 		wrapper.add(card);
 		wrapper.add(Box.createVerticalStrut(8));
 		wrapper.setVisible(false);
@@ -129,7 +132,9 @@ class WelcomeCard
 		{
 			if (connect)
 			{
-				card.add(Box.createVerticalStrut(10));
+				card.add(Box.createVerticalStrut(8));
+				card.add(divider());
+				card.add(Box.createVerticalStrut(8));
 			}
 			addImportBlock(needsLogin);
 		}
@@ -146,8 +151,7 @@ class WelcomeCard
 		card.add(Box.createVerticalStrut(6));
 		JPanel row = new JPanel(new BorderLayout(8, 0));
 		row.setOpaque(false);
-		JButton connect = new JButton("Connect");
-		connect.setFocusPainted(false);
+		JButton connect = primaryButton("Connect");
 		connect.addActionListener(e ->
 		{
 			if (confirmConnect.confirm(card))
@@ -199,6 +203,17 @@ class WelcomeCard
 	{
 		return count == 0 ? "GE History read: no trades to import"
 			: "Imported " + count + " trade" + (count == 1 ? "" : "s") + " from GE History";
+	}
+
+	/** A thin line between the card's two parts. */
+	private static JComponent divider()
+	{
+		JPanel line = new JPanel();
+		line.setBackground(ColorScheme.MEDIUM_GRAY_COLOR);
+		line.setPreferredSize(new Dimension(1, 1));
+		line.setMaximumSize(new Dimension(Integer.MAX_VALUE, 1));
+		line.setAlignmentX(Component.LEFT_ALIGNMENT);
+		return line;
 	}
 
 	private static JComponent line(String text, Color color)

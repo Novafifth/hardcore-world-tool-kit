@@ -76,7 +76,7 @@ class HomeView
 				k.value.getQty(), k.value.getPrice(), k.value.getTs(), onOpen));
 		mineList.setEmptyText("No trades recorded yet. Trade on a Hardcore World or open your GE History.");
 
-		JPanel tabs = new JPanel(new GridLayout(1, 2, 4, 0));
+		JPanel tabs = new JPanel(new GridLayout(1, 2, 0, 0));
 		tabs.setOpaque(false);
 		JButton marketTab = tabButton("Market");
 		JButton mine = tabButton("My trades");
