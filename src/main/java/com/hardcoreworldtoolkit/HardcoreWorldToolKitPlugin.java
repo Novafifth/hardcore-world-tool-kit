@@ -102,8 +102,11 @@ public class HardcoreWorldToolKitPlugin extends Plugin
 	private static final String MENU_OPTION = "HC prices";
 	/** Offer updates within this many ticks of login are the client replaying state, not live trades. */
 	private static final int LOGIN_BURST_TICKS = 2;
-	/** Re-send the open offers this often (ticks) so the server knows they are still up. */
-	private static final int OPEN_OFFERS_INTERVAL_TICKS = 600;
+	/**
+	 * How often (ticks) the open offers are compared with what was last sent (a local check, no request); they go out
+	 * only when they changed or as an occasional keep-alive, see {@link OpenOffersGate}.
+	 */
+	private static final int OPEN_OFFERS_INTERVAL_TICKS = 100;
 	/** How many ticks to keep trying to read the GE History list after it opens. */
 	private static final int HISTORY_READ_TICKS = 10;
 	/** How often (ticks) to record that the offers were still unchanged, bounding when a logged-out fill happened. */
@@ -195,6 +198,7 @@ public class HardcoreWorldToolKitPlugin extends Plugin
 	/** Tick of the last real login (or hop / reconnect); not loading screens. */
 	private volatile int lastLoginTick = -1;
 	private volatile int nextOpenOffersTick = -1;
+	private final OpenOffersGate openOffersGate = new OpenOffersGate();
 	private volatile int historyReadTicks;
 	private volatile int lastGeItem = -1;
 	/** Set on login: the next tick checks the account's onboarding state and the one-time chat hint. */
@@ -309,6 +313,7 @@ public class HardcoreWorldToolKitPlugin extends Plugin
 			{
 				// Enabled while already logged in: no login event is coming, so send the open offers soon.
 				nextOpenOffersTick = client.getTickCount() + 1;
+				openOffersGate.reset();
 				loginCheckPending = true;
 				// ... and no offer events either, for slots that haven't changed since: compare all 8 now.
 				reconcileSlots();
@@ -437,6 +442,7 @@ public class HardcoreWorldToolKitPlugin extends Plugin
 	{
 		lastLoginTick = -1;
 		nextOpenOffersTick = -1;
+		openOffersGate.reset();
 		historyReadTicks = 0;
 		lastGeItem = -1;
 		loginCheckPending = false;
@@ -491,6 +497,7 @@ public class HardcoreWorldToolKitPlugin extends Plugin
 		{
 			lastLoginTick = client.getTickCount();
 			nextOpenOffersTick = lastLoginTick + LOGIN_BURST_TICKS + 1;
+			openOffersGate.reset();
 			loginCheckPending = true;
 		}
 		if (e.getGameState() == GameState.LOGIN_SCREEN)
@@ -524,7 +531,11 @@ public class HardcoreWorldToolKitPlugin extends Plugin
 		if (HardcoreWorldToolKitConfig.KEY_CONNECTED.equals(e.getKey()) || HardcoreWorldToolKitConfig.KEY_SHARE.equals(e.getKey()))
 		{
 			// Send the open offers soon after sharing gets switched on. Tick state belongs to the client thread.
-			clientThread.invoke(() -> nextOpenOffersTick = client.getTickCount() + 1);
+			clientThread.invoke(() ->
+			{
+				nextOpenOffersTick = client.getTickCount() + 1;
+				openOffersGate.reset();
+			});
 		}
 		OfferMarketWatch watch = offerWatch;
 		if (watch != null)
@@ -899,7 +910,11 @@ public class HardcoreWorldToolKitPlugin extends Plugin
 			TradeUploader up = uploader;
 			if (up != null && isTrackedWorld() && ensureProfileLoaded(t) && shareEnabled())
 			{
-				up.setOpenOffers(HARDCORE_ECONOMY, accountId(), buildOpenOffers(t, up));
+				List<JsonObject> offers = buildOpenOffers(t, up);
+				if (openOffersGate.shouldSend(accountId(), offers, System.currentTimeMillis()))
+				{
+					up.setOpenOffers(HARDCORE_ECONOMY, accountId(), offers);
+				}
 			}
 		}
 	}

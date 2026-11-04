@@ -69,6 +69,11 @@ class ItemView
 {
 	/** After an upload that included this item, refresh it from the server once, this long after (coalesced). */
 	private static final int UPLOAD_REFRESH_MS = 750;
+	/** How long the chart's price history is kept before the periodic reload fetches it again. */
+	private static final long SERIES_REFRESH_MS = 5 * 60_000L;
+	private int seriesItem = -1;
+	private ChartRange seriesRange;
+	private long seriesAt;
 	static final String NOT_CONNECTED = "Connect (on the home screen or in the settings) to see market data from all players.";
 
 	private final HardcoreWorldToolKitConfig config;
@@ -382,11 +387,22 @@ class ItemView
 		}
 		chartSection.setVisible(true);
 		market.item(itemId, fresh, detail -> onDetail(itemId, detail), err -> onError(itemId, err));
-		loadSeries(itemId, range, fresh);
+		// The price history moves slowly (its newest bucket is minutes wide): the periodic reload skips it while the
+		// chart already shows this item and range and was fetched recently. A manual refresh, an upload, opening an
+		// item, changing the range and an empty chart still fetch it.
+		boolean seriesCurrent = !fresh && itemId == seriesItem && range == seriesRange && chart.hasData()
+			&& System.currentTimeMillis() - seriesAt < SERIES_REFRESH_MS;
+		if (!seriesCurrent)
+		{
+			loadSeries(itemId, range, fresh);
+		}
 	}
 
 	private void loadSeries(int itemId, ChartRange r, boolean fresh)
 	{
+		seriesItem = itemId;
+		seriesRange = r;
+		seriesAt = System.currentTimeMillis();
 		market.series(itemId, r.label(), r.step(), fresh, series ->
 		{
 			if (itemId == currentItem && r == range)

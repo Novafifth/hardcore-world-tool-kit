@@ -62,7 +62,7 @@ public class HardcoreWorldToolKitPanel extends PluginPanel
 	private static final String CARD_ITEM = "item";
 	private static final String CARD_SEARCH = "search";
 	private static final int MAX_SEARCH_RESULTS = 30;
-	private static final int REFRESH_MS = 15_000;
+	private static final int REFRESH_MS = 30_000;
 	/**
 	 * Every this many incremental loads (about 5 minutes), load the newest page again. That page is the same on every
 	 * server, so it recovers from event ids that start over (another server behind the same URL, a database reset).
