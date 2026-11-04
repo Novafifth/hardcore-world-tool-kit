@@ -72,6 +72,8 @@ public class HardcoreWorldToolKitPanel extends PluginPanel
 	/** How long (visible seconds) the "Imported N trades" line stays. */
 	private static final int IMPORT_NOTICE_SECONDS = 30;
 	private static final int HEADER_HEIGHT = 30;
+	static final String STATS_URL = "https://hardcore.malkana.dev";
+	static final String STATS_TOOLTIP = "Opens the Hardcore Worlds statistics page (Market Watch) in your browser";
 	static final String GEAR_TOOLTIP = "Settings: RuneLite Configuration > Hardcore World Tool Kit";
 	static final String DELETE_ITEM = "Delete my shared data...";
 	static final String DELETE_TITLE = "Delete my shared data";
@@ -286,7 +288,16 @@ public class HardcoreWorldToolKitPanel extends PluginPanel
 		gear.setFocusPainted(false);
 		gear.setToolTipText(GEAR_TOOLTIP);
 		gear.addActionListener(e -> openConfig.run());
-		searchRow.add(gear, BorderLayout.EAST);
+		JButton stats = new JButton(Icons.stats());
+		stats.setPreferredSize(new Dimension(HEADER_HEIGHT, HEADER_HEIGHT));
+		stats.setFocusPainted(false);
+		stats.setToolTipText(STATS_TOOLTIP);
+		stats.addActionListener(e -> LinkBrowser.browse(STATS_URL));
+		JPanel buttons = new JPanel(new java.awt.GridLayout(1, 2, 4, 0));
+		buttons.setOpaque(false);
+		buttons.add(stats);
+		buttons.add(gear);
+		searchRow.add(buttons, BorderLayout.EAST);
 		searchRow.setAlignmentX(Component.LEFT_ALIGNMENT);
 		searchRow.setMaximumSize(new Dimension(Integer.MAX_VALUE, HEADER_HEIGHT));
 		north.add(searchRow);

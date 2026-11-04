@@ -33,6 +33,7 @@ final class Icons
 	private static ImageIcon dotOff;
 	private static ImageIcon refresh;
 	private static ImageIcon skull;
+	private static ImageIcon stats;
 
 	private Icons()
 	{
@@ -118,6 +119,32 @@ final class Icons
 		}
 		g.setColor(color);
 		g.fill(bubble);
+		g.dispose();
+		return img;
+	}
+
+	/** Three bars of rising height, for the statistics button. */
+	static ImageIcon stats()
+	{
+		if (stats == null)
+		{
+			stats = new ImageIcon(drawStats(COG_SIZE, ColorScheme.LIGHT_GRAY_COLOR));
+		}
+		return stats;
+	}
+
+	static BufferedImage drawStats(int size, Color color)
+	{
+		BufferedImage img = new BufferedImage(size, size, BufferedImage.TYPE_INT_ARGB);
+		Graphics2D g = img.createGraphics();
+		g.setColor(color);
+		int w = Math.max(2, size / 4);
+		int gap = Math.max(1, (size - 3 * w) / 2);
+		for (int i = 0; i < 3; i++)
+		{
+			int h = size * (i + 2) / 5;
+			g.fillRect(i * (w + gap), size - h, w, h);
+		}
 		g.dispose();
 		return img;
 	}
