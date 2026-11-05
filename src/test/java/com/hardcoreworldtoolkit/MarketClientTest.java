@@ -136,13 +136,13 @@ public class MarketClientTest
 	}
 
 	@Test
-	public void itemAsyncAsksForTheSummaryOnly() throws InterruptedException
+	public void itemAsyncSharesTheItemViewsCachedAnswer() throws InterruptedException
 	{
 		BlockingQueue<String> threads = new LinkedBlockingQueue<>();
 		market().itemAsync(4151, d -> threads.add(Thread.currentThread().getName()), err -> threads.add("err"));
 		Request req = next();
 		assertEquals("/v1/item/4151", req.url().encodedPath());
-		assertEquals("1", req.url().queryParameter("limit"));
+		assertEquals("40", req.url().queryParameter("limit"));
 		String thread = threads.poll(5, TimeUnit.SECONDS);
 		assertNotNull(thread);
 		// Delivered on OkHttp's thread, not queued to the EDT.

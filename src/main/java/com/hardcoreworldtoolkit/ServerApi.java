@@ -97,8 +97,8 @@ class ServerApi
 	}
 
 	/**
-	 * HTTP request: GET market data from the server, one of v1/recent, v1/item/{id}, v1/item/{id}/series or v1/items
-	 * (the URL is built by {@link MarketClient}). No token. Only while connected.
+	 * HTTP request: GET market data from the server, one of v1/recent, v1/item/{id}, v1/item/{id}/series, v1/items or
+	 * v1/swap-rate (the URL is built by {@link MarketClient}). No token. Only while connected.
 	 *
 	 * @param fresh skip any HTTP cache
 	 */

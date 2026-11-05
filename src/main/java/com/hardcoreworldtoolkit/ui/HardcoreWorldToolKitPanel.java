@@ -29,6 +29,7 @@ import java.awt.event.MouseEvent;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.Supplier;
 import javax.swing.Box;
 import javax.swing.JButton;
@@ -62,7 +63,9 @@ public class HardcoreWorldToolKitPanel extends PluginPanel
 	private static final String CARD_ITEM = "item";
 	private static final String CARD_SEARCH = "search";
 	private static final int MAX_SEARCH_RESULTS = 30;
-	private static final int REFRESH_MS = 30_000;
+	private static final int REFRESH_MS = 60_000;
+	/** How often the home card asks for the bond rate (the server's estimate changes slowly). */
+	private static final long BOND_EVERY_MS = 5 * 60_000L;
 	/**
 	 * Every this many incremental loads (about 5 minutes), load the newest page again. That page is the same on every
 	 * server, so it recovers from event ids that start over (another server behind the same URL, a database reset).
@@ -84,6 +87,7 @@ public class HardcoreWorldToolKitPanel extends PluginPanel
 	static final String CONNECT_TO_DELETE = "Connect first: the plugin only contacts the server while connected.";
 
 	private final HardcoreWorldToolKitConfig config;
+	private final ConfigManager configManager;
 	private final ItemManager itemManager;
 	private final MarketClient market;
 	/** Your recent trades, newest first. */
@@ -126,6 +130,7 @@ public class HardcoreWorldToolKitPanel extends PluginPanel
 	private JPanel pinned;
 	private final ItemView itemView;
 	private final Timer refreshTimer;
+	private long bondAt;
 	private final Timer searchDebounce;
 	/** Drives the per-second labels, only while the panel is shown. */
 	private final Timer ticker;
@@ -183,6 +188,7 @@ public class HardcoreWorldToolKitPanel extends PluginPanel
 	{
 		this.config = config;
 		this.itemManager = itemManager;
+		this.configManager = configManager;
 		this.market = market;
 		this.myTrades = myTrades;
 		this.privacyUrl = base.newBuilder().addPathSegment("privacy").addPathSegment("hardcore").build().toString();
@@ -254,7 +260,12 @@ public class HardcoreWorldToolKitPanel extends PluginPanel
 		cardPanel.add(pinTop(searchResults), CARD_SEARCH);
 		add(cardPanel, BorderLayout.CENTER);
 
-		refreshTimer = new Timer(REFRESH_MS, e -> refresh());
+		refreshTimer = new Timer(REFRESH_MS, e ->
+		{
+			// A little different each time, so panels don't all ask at the same moment.
+			((Timer) e.getSource()).setDelay(REFRESH_MS + ThreadLocalRandom.current().nextInt(-REFRESH_MS / 5, REFRESH_MS / 5));
+			refresh();
+		});
 		ticker = new Timer(TICK_MS, e -> tick());
 		onConfigChanged();
 	}
@@ -288,11 +299,19 @@ public class HardcoreWorldToolKitPanel extends PluginPanel
 		gear.setFocusPainted(false);
 		gear.setToolTipText(GEAR_TOOLTIP);
 		gear.addActionListener(e -> openConfig.run());
-		JButton stats = new JButton(Icons.stats());
+		JButton stats = new JButton(config.statsSeen() ? Icons.stats() : Icons.statsNew());
 		stats.setPreferredSize(new Dimension(HEADER_HEIGHT, HEADER_HEIGHT));
 		stats.setFocusPainted(false);
 		stats.setToolTipText(STATS_TOOLTIP);
-		stats.addActionListener(e -> LinkBrowser.browse(STATS_URL));
+		stats.addActionListener(e ->
+		{
+			LinkBrowser.browse(STATS_URL);
+			if (!config.statsSeen())
+			{
+				configManager.setConfiguration(HardcoreWorldToolKitConfig.GROUP, HardcoreWorldToolKitConfig.KEY_STATS_SEEN, true);
+				stats.setIcon(Icons.stats());
+			}
+		});
 		JPanel buttons = new JPanel(new java.awt.GridLayout(1, 2, 4, 0));
 		buttons.setOpaque(false);
 		buttons.add(stats);
@@ -583,7 +602,20 @@ public class HardcoreWorldToolKitPanel extends PluginPanel
 			homeView.showNotConnected();
 			return;
 		}
+		loadBond();
 		loadFeed(feedFullNext || lastFeedId <= 0 || feedPollsSinceFull >= FULL_FEED_EVERY);
+	}
+
+	/** The bond rate row: at most every {@link #BOND_EVERY_MS}; a failed load keeps what is shown. */
+	private void loadBond()
+	{
+		long now = System.currentTimeMillis();
+		if (now - bondAt < BOND_EVERY_MS)
+		{
+			return;
+		}
+		bondAt = now;
+		market.swapRate(homeView::showBond, err -> { });
 	}
 
 	/**

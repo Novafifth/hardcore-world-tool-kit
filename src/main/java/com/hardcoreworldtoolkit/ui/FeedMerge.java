@@ -16,6 +16,9 @@ import java.util.Map;
  */
 final class FeedMerge
 {
+	/** How far behind a newest page may be and still be the same server. */
+	private static final long IDS_BEHIND_OK = 5000;
+
 	/** Most events kept for the feed. */
 	static final int CAP = 200;
 
@@ -90,12 +93,14 @@ final class FeedMerge
 	}
 
 	/**
-	 * True when a full (newest page) response shows that the server's ids are lower than the ones we have: a different
-	 * or reset server. An empty newest page means the server has no events at all. The old feed must then be dropped.
+	 * True when a full (newest page) response shows that the server's ids are far lower than the ones we have: a
+	 * different or reset server. An empty newest page means the server has no events at all. The old feed must then be
+	 * dropped. Slightly lower is normal: the answer came from a server instance whose cached page is a little older.
 	 */
 	static boolean idsWentBack(List<MarketData.FeedEvent> newestPage, long previousMaxId)
 	{
-		return previousMaxId > 0 && maxId(newestPage, 0) < previousMaxId;
+		long newest = maxId(newestPage, 0);
+		return previousMaxId > 0 && (newest == 0 || newest + IDS_BEHIND_OK < previousMaxId);
 	}
 
 	/** The highest id in {@code events}, or {@code previous} if that is higher. */

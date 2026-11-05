@@ -34,6 +34,7 @@ final class Icons
 	private static ImageIcon refresh;
 	private static ImageIcon skull;
 	private static ImageIcon stats;
+	private static ImageIcon statsNew;
 
 	private Icons()
 	{
@@ -121,6 +122,22 @@ final class Icons
 		g.fill(bubble);
 		g.dispose();
 		return img;
+	}
+
+	/** The statistics icon with a small red dot, until the button has been clicked once. */
+	static ImageIcon statsNew()
+	{
+		if (statsNew == null)
+		{
+			BufferedImage img = drawStats(COG_SIZE, ColorScheme.LIGHT_GRAY_COLOR);
+			Graphics2D g = img.createGraphics();
+			g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+			g.setColor(new Color(0xE0, 0x3A, 0x3A));
+			g.fill(new Ellipse2D.Double(COG_SIZE - 6, 0, 6, 6));
+			g.dispose();
+			statsNew = new ImageIcon(img);
+		}
+		return statsNew;
 	}
 
 	/** Three bars of rising height, for the statistics button. */

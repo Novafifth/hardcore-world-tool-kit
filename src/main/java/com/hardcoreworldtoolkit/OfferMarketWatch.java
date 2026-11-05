@@ -92,7 +92,7 @@ class OfferMarketWatch
 			next.forEach(o -> keys.add(o.getOfferKey()));
 			gate.retain(keys);
 		}
-		if (!(newItems && inUse() && refresh(true)))
+		if (!(newItems && inUse() && refresh(true, false)))
 		{
 			reevaluate();
 		}
@@ -112,6 +112,12 @@ class OfferMarketWatch
 	 * @return true if a request was started
 	 */
 	boolean refresh(boolean onDemand)
+	{
+		return refresh(onDemand, onDemand);
+	}
+
+	/** @param fresh skip caches: only for a refresh the player asked for, not for a new item in their offers */
+	private boolean refresh(boolean onDemand, boolean fresh)
 	{
 		Set<Integer> ids;
 		int gen;
@@ -147,7 +153,7 @@ class OfferMarketWatch
 			ids = itemIds(offers);
 			gen = generation;
 		}
-		fetcher.items(ids, onDemand, r -> onResponse(gen, ids, r), err -> onError(gen, err));
+		fetcher.items(ids, fresh, r -> onResponse(gen, ids, r), err -> onError(gen, err));
 		return true;
 	}
 

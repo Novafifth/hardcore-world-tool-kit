@@ -14,6 +14,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedDeque;
@@ -117,6 +118,14 @@ class TradeUploader
 			this.name = name;
 			this.limit = Math.max(0, limit);
 		}
+	}
+
+	/** Shared with the market client (see setBackoff), so one busy answer pauses both. */
+	private ServerBackoff backoff = new ServerBackoff(System::currentTimeMillis, new Random());
+
+	void setBackoff(ServerBackoff backoff)
+	{
+		this.backoff = backoff;
 	}
 
 	/**
@@ -449,6 +458,7 @@ class TradeUploader
 			public void onFailure(Call call, IOException e)
 			{
 				log.debug("Trade upload failed, will retry", e);
+				backoff.failed(0);
 				release();
 			}
 
@@ -456,6 +466,7 @@ class TradeUploader
 			public void onResponse(Call call, Response response)
 			{
 				boolean continued = false;
+				backoff.observe(response.code(), response.header("Retry-After"));
 				try (response)
 				{
 					if (response.code() == 401)
@@ -514,6 +525,12 @@ class TradeUploader
 				}
 			}
 		};
+		if (backoff.waiting())
+		{
+			// The server said it is overloaded: the batch stays queued for a later flush.
+			log.debug("Server busy: upload not sent");
+			return false;
+		}
 		try
 		{
 			api.postSubmit(token, body, callback);

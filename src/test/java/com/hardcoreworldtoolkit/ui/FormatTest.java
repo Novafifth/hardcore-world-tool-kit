@@ -7,6 +7,14 @@ import org.junit.Test;
 
 public class FormatTest
 {
+	@Test
+	public void ratioIsWholeAboveTenAndOneDecimalBelow()
+	{
+		org.junit.Assert.assertEquals("57", Format.ratio(57.4));
+		org.junit.Assert.assertEquals("58", Format.ratio(57.5));
+		org.junit.Assert.assertEquals("8.3", Format.ratio(8.26));
+	}
+
 	private static final long NOW = 1_000_000;
 
 	@Test

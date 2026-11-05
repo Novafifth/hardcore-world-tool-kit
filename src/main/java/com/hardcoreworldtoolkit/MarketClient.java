@@ -3,6 +3,7 @@ package com.hardcoreworldtoolkit;
 import com.google.gson.Gson;
 import java.io.IOException;
 import java.util.Collection;
+import java.util.Random;
 import java.util.TreeSet;
 import java.util.stream.Collectors;
 import java.util.concurrent.Executor;
@@ -50,6 +51,14 @@ public class MarketClient
 	private final Gson gson;
 	private final HttpUrl base;
 	private final int world;
+
+	/** Shared with the uploader (see setBackoff), so one busy answer pauses both. */
+	private ServerBackoff backoff = new ServerBackoff(System::currentTimeMillis, new Random());
+
+	void setBackoff(ServerBackoff backoff)
+	{
+		this.backoff = backoff;
+	}
 
 	MarketClient(ServerApi api, Gson gson, HttpUrl base, int world)
 	{
@@ -100,11 +109,11 @@ public class MarketClient
 
 	/**
 	 * One item's summary for the GE price line, with callbacks on the OkHttp thread (never the EDT or client thread).
-	 * Asks for a single trade: only the summary is used.
+	 * Only the summary is used; it asks with the item view's limit, so both share one cached answer on the server.
 	 */
 	void itemAsync(int itemId, Consumer<MarketData.ItemDetail> ok, Consumer<String> err)
 	{
-		get(url("v1/item/" + itemId).addQueryParameter("limit", "1"), false, MarketData.ItemDetail.class, DIRECT, ok, err);
+		get(url("v1/item/" + itemId).addQueryParameter("limit", String.valueOf(ITEM_LIMIT)), false, MarketData.ItemDetail.class, DIRECT, ok, err);
 	}
 
 	/**
@@ -115,6 +124,12 @@ public class MarketClient
 	{
 		String list = new TreeSet<>(ids).stream().map(String::valueOf).collect(Collectors.joining(","));
 		get(url("v1/items").addQueryParameter("ids", list), fresh, MarketData.ItemsResponse.class, DIRECT, ok, err);
+	}
+
+	/** The estimated Hardcore : OSRS gold rate, from what an Old school bond costs on each market. */
+	public void swapRate(Consumer<MarketData.SwapRate> ok, Consumer<String> err)
+	{
+		get(url("v1/swap-rate"), false, MarketData.SwapRate.class, EDT, ok, err);
 	}
 
 	/** The error message for an HTTP error status. */
@@ -164,18 +179,29 @@ public class MarketClient
 	private <T> void get(HttpUrl.Builder url, boolean fresh, Class<T> type, Executor callbacks, Consumer<T> ok,
 		Consumer<String> err)
 	{
+		if (!fresh && backoff.waiting())
+		{
+			// The server said it is overloaded: keep showing what we have, ask again after the wait.
+			callbacks.execute(() -> err.accept(serverError(503)));
+			return;
+		}
 		Callback callback = new Callback()
 		{
 			@Override
 			public void onFailure(Call call, IOException e)
 			{
 				log.debug("Market request failed: {}", call.request().url(), e);
+				if (!call.isCanceled())
+				{
+					backoff.failed(0);
+				}
 				callbacks.execute(() -> err.accept(UNREACHABLE));
 			}
 
 			@Override
 			public void onResponse(Call call, Response response)
 			{
+				backoff.observe(response.code(), response.header("Retry-After"));
 				try (response)
 				{
 					ResponseBody body = response.body();

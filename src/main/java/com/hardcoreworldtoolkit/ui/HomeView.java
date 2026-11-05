@@ -25,7 +25,9 @@ import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.border.EmptyBorder;
 import javax.swing.text.JTextComponent;
+import net.runelite.api.gameval.ItemID;
 import net.runelite.client.game.ItemManager;
 import net.runelite.client.ui.ColorScheme;
 import net.runelite.client.util.QuantityFormatter;
@@ -41,6 +43,10 @@ class HomeView
 
 	private final JPanel panel = column();
 	private final JLabel statsLabel = mutedLabel("");
+	/** The bond rate row, above the tabs; hidden until the server has a rate. */
+	private final JPanel bond = new JPanel(new BorderLayout());
+	private final ItemManager itemManager;
+	private final BiConsumer<Integer, String> onOpen;
 	private final JLabel updatedLabel = mutedLabel("");
 	/** "Updated Xs ago" plus the refresh button; only on the Market tab once it has data. */
 	private final JPanel updatedRow = new JPanel(new BorderLayout(4, 0));
@@ -68,6 +74,8 @@ class HomeView
 	HomeView(ItemManager itemManager, JComponent welcome, JComponent offers, JComponent profit, Runnable onTab, Runnable onRefresh,
 		BiConsumer<Integer, String> onOpen)
 	{
+		this.itemManager = itemManager;
+		this.onOpen = onOpen;
 		marketList = new RowList<>(r -> r.getEvent().getId(), r -> when(r.getEvent().getKind(), r.getEvent().getReceivedAt()),
 			r -> marketRow(itemManager, r, onOpen));
 		marketList.setEmptyText("No trades yet.");
@@ -106,6 +114,11 @@ class HomeView
 		panel.add(welcome);
 		panel.add(offers);
 		panel.add(profit);
+		bond.setOpaque(false);
+		bond.setVisible(false);
+		bond.setBorder(new EmptyBorder(0, 0, 6, 0));
+		bond.setAlignmentX(Component.LEFT_ALIGNMENT);
+		panel.add(bond);
 		panel.add(tabs);
 		panel.add(Box.createVerticalStrut(4));
 		panel.add(updatedRow);
@@ -167,6 +180,31 @@ class HomeView
 		}
 		style.run();
 		onTab.run();
+	}
+
+	/** Shows the estimated Hardcore : OSRS rate as a bond row (it opens the bond), or hides it without a rate. */
+	void showBond(MarketData.SwapRate s)
+	{
+		bond.removeAll();
+		boolean show = s != null && s.getRate() != null && s.getRate() > 0;
+		if (show)
+		{
+			String avg = Format.ratio(s.getRate());
+			String range = avg;
+			if (s.getRateLow() != null && s.getRateHigh() != null
+				&& !Format.ratio(s.getRateLow()).equals(Format.ratio(s.getRateHigh())))
+			{
+				range = Format.ratio(s.getRateLow()) + "\u2013" + Format.ratio(s.getRateHigh());
+			}
+			JComponent row = tradeRow(itemManager, ItemID.OSRS_BOND, "Est. Swap Rate  1 : " + range,
+				"Average 1 : " + avg, null, onOpen);
+			row.setToolTipText("Based off bond prices (Hardcore : OSRS GP)");
+			bond.add(row, BorderLayout.CENTER);
+			bond.setMaximumSize(new Dimension(Integer.MAX_VALUE, row.getPreferredSize().height + 6));
+		}
+		bond.setVisible(show);
+		bond.revalidate();
+		bond.repaint();
 	}
 
 	JComponent getComponent()

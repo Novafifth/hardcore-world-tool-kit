@@ -39,6 +39,12 @@ final class Format
 		return "Traded " + QuantityFormatter.formatNumber(qty) + " × " + QuantityFormatter.formatNumber(price);
 	}
 
+	/** The XX of a "1 : XX" rate: whole above 10, one decimal below. */
+	static String ratio(double rate)
+	{
+		return rate >= 10 ? String.valueOf(Math.round(rate)) : String.format(Locale.ROOT, "%.1f", rate);
+	}
+
 	/** Exact below 10m gp, stack format (e.g. 12.5M) above. "-" when unknown. */
 	static String gp(Long v)
 	{

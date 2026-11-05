@@ -45,6 +45,19 @@ public final class MarketData
 		private List<FeedEvent> events = Collections.emptyList();
 	}
 
+	/** The estimated Hardcore : OSRS gold rate from Old school bond prices (v1/swap-rate). rate is null while unknown. */
+	@Getter
+	@EqualsAndHashCode
+	public static class SwapRate
+	{
+		private Double rate;
+		/** The rate at the highest / lowest recent Hardcore fill: the range. */
+		private Double rateLow;
+		private Double rateHigh;
+		private long main;
+		private long hardcore;
+	}
+
 	@Getter
 	@EqualsAndHashCode
 	public static class Stats

@@ -12,6 +12,7 @@ public interface HardcoreWorldToolKitConfig extends Config
 {
 	String GROUP = "hardcore-world-tool-kit";
 	String KEY_CONNECTED = "connected";
+	String KEY_STATS_SEEN = "statsSeen";
 	String KEY_SHARE = "shareTrades";
 	String KEY_LOCAL_LOG = "saveLocalLog";
 	String KEY_AUTO_OPEN = "autoOpenFromGe";
@@ -166,5 +167,12 @@ public interface HardcoreWorldToolKitConfig extends Config
 	default boolean saveLocalLog()
 	{
 		return true;
+	}
+
+	/** Whether the statistics button was clicked once (its red dot then goes away). */
+	@ConfigItem(keyName = KEY_STATS_SEEN, name = "", description = "", hidden = true)
+	default boolean statsSeen()
+	{
+		return false;
 	}
 }

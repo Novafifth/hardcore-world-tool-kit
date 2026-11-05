@@ -15,6 +15,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.TreeMap;
@@ -112,7 +113,7 @@ public class HardcoreWorldToolKitPlugin extends Plugin
 	/** How often (ticks) to record that the offers were still unchanged, bounding when a logged-out fill happened. */
 	private static final int SEEN_INTERVAL_TICKS = 100;
 	/** After a fill, upload within about this long instead of waiting for the next scheduled flush. */
-	private static final int FLUSH_SOON_SECONDS = 2;
+	private static final int FLUSH_SOON_SECONDS = 8;
 	/** Tries for that upload while another one is still running. */
 	private static final int FLUSH_SOON_TRIES = 3;
 	/** How often the offer check runs; {@link OfferMarketWatch} decides whether it actually fetches (at most once a minute). */
@@ -254,9 +255,12 @@ public class HardcoreWorldToolKitPlugin extends Plugin
 		executor.execute(store::loadIdentity);
 		// Every HTTP request goes through this; each request method sends nothing while the Connect setting is off.
 		ServerApi api = new ServerApi(okHttpClient, gson, base, config);
+		// One wait for every request: an overloaded server pauses uploads and automatic market requests alike.
+		ServerBackoff backoff = new ServerBackoff(System::currentTimeMillis, new Random());
 		// Uploads carry the install token (registering first); nothing, registration included, is sent unless
 		// connected and sharing.
 		TradeUploader up = new TradeUploader(api, gson, this::onUploaded, store, this::shareEnabled);
+		up.setBackoff(backoff);
 		uploader = up;
 		// Uploads left over from the last session (RuneLite closed, server down) go back in
 		// the queue; they are only sent if connected and sharing, like everything else.
@@ -276,6 +280,7 @@ public class HardcoreWorldToolKitPlugin extends Plugin
 		store.reset();
 		flushTask = executor.scheduleWithFixedDelay(this::scheduledFlush, 15, 30, TimeUnit.SECONDS);
 		MarketClient market = new MarketClient(api, gson, base, HARDCORE_ECONOMY);
+		market.setBackoff(backoff);
 		geQuotes = new ItemQuoteCache(market::itemAsync);
 		offerWatch = new OfferMarketWatch(market::items, System::currentTimeMillis, config::connected,
 			() -> config.offerNotification().isEnabled(), this::panelShown, () -> config.staleHours() * 3600L, myTrades::snapshot,

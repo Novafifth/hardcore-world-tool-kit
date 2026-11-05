@@ -152,11 +152,12 @@ class ItemView
 		tradeRows.setEmptyText("None yet.");
 		mineRows = new RowList<>(k -> k.key, k -> when(k.value.getKind(), k.value.getTs()),
 			k -> mineRow(k.value));
+		// A normal load, not a forced one: the player's own trades are shown from local data already.
 		uploadRefresh = new Timer(UPLOAD_REFRESH_MS, e ->
 		{
 			if (hasItem())
 			{
-				load(currentItem, true);
+				load(currentItem, false);
 			}
 		});
 		uploadRefresh.setRepeats(false);
