@@ -35,6 +35,7 @@ final class Icons
 	private static ImageIcon skull;
 	private static ImageIcon stats;
 	private static ImageIcon statsNew;
+	private static ImageIcon heart;
 
 	private Icons()
 	{
@@ -120,6 +121,37 @@ final class Icons
 		}
 		g.setColor(color);
 		g.fill(bubble);
+		g.dispose();
+		return img;
+	}
+
+	/** A red heart, for the Ko-fi button. */
+	static ImageIcon heart()
+	{
+		if (heart == null)
+		{
+			heart = new ImageIcon(drawHeart(CHAT_SIZE, new Color(0xE0, 0x4C, 0x5C)));
+		}
+		return heart;
+	}
+
+	static BufferedImage drawHeart(int size, Color color)
+	{
+		BufferedImage img = new BufferedImage(size, size, BufferedImage.TYPE_INT_ARGB);
+		Graphics2D g = img.createGraphics();
+		g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+		double s = size, r = s * 0.27;
+		// Two round lobes and a point at the bottom.
+		Area h = new Area(new Ellipse2D.Double(s * 0.5 - 2 * r, s * 0.12, 2 * r, 2 * r));
+		h.add(new Area(new Ellipse2D.Double(s * 0.5, s * 0.12, 2 * r, 2 * r)));
+		Path2D.Double tip = new Path2D.Double();
+		tip.moveTo(s * 0.5 - 2 * r + s * 0.02, s * 0.12 + r * 1.25);
+		tip.lineTo(s * 0.5, s * 0.92);
+		tip.lineTo(s * 0.5 + 2 * r - s * 0.02, s * 0.12 + r * 1.25);
+		tip.closePath();
+		h.add(new Area(tip));
+		g.setColor(color);
+		g.fill(h);
 		g.dispose();
 		return img;
 	}

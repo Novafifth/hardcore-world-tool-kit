@@ -14,16 +14,21 @@ public class DiscordFooterTest
 	@Test
 	public void buttonOpensTheInvite() throws Exception
 	{
-		int[] opened = {0};
+		int[] opened = {0, 0};
 		SwingUtilities.invokeAndWait(() ->
 		{
-			DiscordFooter footer = new DiscordFooter(() -> opened[0]++);
+			DiscordFooter footer = new DiscordFooter(() -> opened[0]++, () -> opened[1]++);
 			JButton button = (JButton) ((Container) footer.getComponent()).getComponent(0);
 			assertEquals(DiscordFooter.BUTTON_TEXT, button.getText());
 			assertNotNull(button.getIcon());
 			button.doClick();
+			JButton heart = (JButton) ((Container) footer.getComponent()).getComponent(1);
+			assertNotNull(heart.getIcon());
+			heart.doClick();
 		});
 		assertEquals(1, opened[0]);
+		assertEquals(1, opened[1]);
+		assertTrue(DiscordFooter.SUPPORT_URL, DiscordFooter.SUPPORT_URL.startsWith("https://hardcore.malkana.dev/"));
 		assertTrue(DiscordFooter.INVITE_URL, DiscordFooter.INVITE_URL.startsWith("https://discord.com/invite/"));
 	}
 

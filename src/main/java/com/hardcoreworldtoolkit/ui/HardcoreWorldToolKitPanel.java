@@ -278,7 +278,8 @@ public class HardcoreWorldToolKitPanel extends PluginPanel
 		{
 			pinned = new JPanel(new BorderLayout());
 			pinned.add(super.getWrappedPanel(), BorderLayout.CENTER);
-			pinned.add(new DiscordFooter(() -> LinkBrowser.browse(DiscordFooter.INVITE_URL)).getComponent(),
+			pinned.add(new DiscordFooter(() -> LinkBrowser.browse(DiscordFooter.INVITE_URL),
+				() -> LinkBrowser.browse(DiscordFooter.SUPPORT_URL)).getComponent(),
 				BorderLayout.SOUTH);
 		}
 		return pinned;
