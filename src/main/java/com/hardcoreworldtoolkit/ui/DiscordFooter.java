@@ -19,7 +19,7 @@ final class DiscordFooter
 {
 	static final String INVITE_URL = "https://discord.com/invite/a2dfkSYw2j";
 	static final String BUTTON_TEXT = "Join the Discord";
-	static final String SUPPORT_URL = "https://hardcore.malkana.dev/links";
+	static final String SUPPORT_URL = "https://hardcore.malkana.dev/links?from=plugin";
 
 	private final JPanel panel = new JPanel(new FlowLayout(FlowLayout.CENTER, 6, 0));
 

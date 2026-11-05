@@ -75,7 +75,8 @@ public class HardcoreWorldToolKitPanel extends PluginPanel
 	/** How long (visible seconds) the "Imported N trades" line stays. */
 	private static final int IMPORT_NOTICE_SECONDS = 30;
 	private static final int HEADER_HEIGHT = 30;
-	static final String STATS_URL = "https://hardcore.malkana.dev";
+	/** "from=plugin" lets the site count how often it is opened from here (a total, nothing about the player). */
+	static final String STATS_URL = "https://hardcore.malkana.dev/?from=plugin";
 	static final String STATS_TOOLTIP = "Opens the Hardcore Worlds statistics page (Market Watch) in your browser";
 	static final String GEAR_TOOLTIP = "Settings: RuneLite Configuration > Hardcore World Tool Kit";
 	static final String DELETE_ITEM = "Delete my shared data...";
