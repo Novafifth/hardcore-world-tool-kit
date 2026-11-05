@@ -62,14 +62,14 @@ public class HardcoreWorldToolKitPanel extends PluginPanel
 	private static final String CARD_ITEM = "item";
 	private static final String CARD_SEARCH = "search";
 	private static final int MAX_SEARCH_RESULTS = 30;
-	private static final int REFRESH_MS = 60_000;
+	private static final int REFRESH_MS = 30_000;
 	/** How often the home card asks for the bond rate (the server's estimate changes slowly). */
 	private static final long BOND_EVERY_MS = 5 * 60_000L;
 	/**
 	 * Every this many incremental loads (about 5 minutes), load the newest page again. That page is the same on every
 	 * server, so it recovers from event ids that start over (another server behind the same URL, a database reset).
 	 */
-	static final int FULL_FEED_EVERY = 20;
+	static final int FULL_FEED_EVERY = 10;
 	private static final int TICK_MS = 1_000;
 	/** How long (visible seconds) the "Imported N trades" line stays. */
 	private static final int IMPORT_NOTICE_SECONDS = 30;
