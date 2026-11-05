@@ -49,7 +49,6 @@ import net.runelite.client.ui.PluginPanel;
 import net.runelite.client.ui.components.IconTextField;
 import net.runelite.client.util.LinkBrowser;
 import net.runelite.http.api.item.ItemPrice;
-import okhttp3.HttpUrl;
 
 /**
  * Side panel: the header strip, item search with a settings (gear) button, connection status, then the market feed /
@@ -76,6 +75,8 @@ public class HardcoreWorldToolKitPanel extends PluginPanel
 	private static final int IMPORT_NOTICE_SECONDS = 30;
 	private static final int HEADER_HEIGHT = 30;
 	/** "from=plugin" lets the site count how often it is opened from here (a total, nothing about the player). */
+	/** The plugin's privacy notice, on the Hardcore World Tool Kit site. */
+	static final String PRIVACY_URL = "https://hardcore.malkana.dev/privacy";
 	static final String STATS_URL = "https://hardcore.malkana.dev/?from=plugin";
 	static final String STATS_TOOLTIP = "Opens the Hardcore Worlds statistics page (Market Watch) in your browser";
 	static final String GEAR_TOOLTIP = "Settings: RuneLite Configuration > Hardcore World Tool Kit";
@@ -135,7 +136,6 @@ public class HardcoreWorldToolKitPanel extends PluginPanel
 	private final Timer searchDebounce;
 	/** Drives the per-second labels, only while the panel is shown. */
 	private final Timer ticker;
-	private final String privacyUrl;
 	private final Runnable checkOffers;
 	private final SharedDataActions sharedData;
 	/** The status line's "Privacy" link; its menu opens below it. */
@@ -177,14 +177,13 @@ public class HardcoreWorldToolKitPanel extends PluginPanel
 	private volatile boolean active;
 
 	/**
-	 * @param base       the server, for the privacy notice link
 	 * @param openConfig   opens this plugin's page in RuneLite's configuration panel; run on the EDT
 	 * @param checkOffers  compares your open offers with the market now (rate limited); run on the EDT, must not block
 	 * @param rebuildProfit recounts your profit from the local trade log in the background; run on the EDT, must not block
 	 * @param sharedData  "Delete my shared data" in the Privacy menu
 	 */
 	public HardcoreWorldToolKitPanel(HardcoreWorldToolKitConfig config, ConfigManager configManager, ItemManager itemManager,
-		MarketClient market, Supplier<List<TradeEvent>> myTrades, HttpUrl base, Runnable openConfig,
+		MarketClient market, Supplier<List<TradeEvent>> myTrades, Runnable openConfig,
 		Runnable checkOffers, Runnable rebuildProfit, SharedDataActions sharedData)
 	{
 		this.config = config;
@@ -192,7 +191,6 @@ public class HardcoreWorldToolKitPanel extends PluginPanel
 		this.configManager = configManager;
 		this.market = market;
 		this.myTrades = myTrades;
-		this.privacyUrl = base.newBuilder().addPathSegment("privacy").addPathSegment("hardcore").build().toString();
 		this.checkOffers = checkOffers;
 		this.sharedData = sharedData;
 
@@ -403,7 +401,7 @@ public class HardcoreWorldToolKitPanel extends PluginPanel
 
 	private void openPrivacy()
 	{
-		LinkBrowser.browse(privacyUrl);
+		LinkBrowser.browse(PRIVACY_URL);
 	}
 
 	/** The status line's Privacy link: the privacy notice, and deleting what this computer shared. */

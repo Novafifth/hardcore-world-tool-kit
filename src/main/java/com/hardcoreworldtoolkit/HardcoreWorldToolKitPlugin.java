@@ -330,7 +330,7 @@ public class HardcoreWorldToolKitPlugin extends Plugin
 		ConfigLinkOverlay overlay = new ConfigLinkOverlay(this);
 		Runnable openConfig = () -> eventBus.post(new OverlayMenuClicked(
 			new OverlayMenuEntry(MenuAction.RUNELITE_OVERLAY_CONFIG, "Configure", "Hardcore World Tool Kit"), overlay));
-		panel = new HardcoreWorldToolKitPanel(config, configManager, itemManager, market, myTrades::snapshot, base, openConfig,
+		panel = new HardcoreWorldToolKitPanel(config, configManager, itemManager, market, myTrades::snapshot, openConfig,
 			() ->
 			{
 				OfferMarketWatch w = offerWatch;
