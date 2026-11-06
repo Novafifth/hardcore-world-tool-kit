@@ -39,6 +39,9 @@ import net.runelite.api.MenuAction;
 import net.runelite.api.MenuEntry;
 import net.runelite.api.ScriptID;
 import net.runelite.api.WorldType;
+import net.runelite.api.coords.WorldPoint;
+import net.runelite.api.events.ActorDeath;
+import net.runelite.api.events.ChatMessage;
 import net.runelite.api.events.GameStateChanged;
 import net.runelite.api.events.GameTick;
 import net.runelite.api.events.GrandExchangeOfferChanged;
@@ -170,6 +173,7 @@ public class HardcoreWorldToolKitPlugin extends Plugin
 	// handlers read each one into a local once so a concurrent shutDown can't null it halfway through.
 	private volatile OfferTracker tracker;
 	private volatile TradeUploader uploader;
+	private volatile DeathReporter deaths;
 	/** Unsent uploads on disk, so closing RuneLite doesn't lose them. */
 	private volatile UploadSpool spool;
 	/** "Delete my shared data" (panel Privacy menu). */
@@ -262,6 +266,7 @@ public class HardcoreWorldToolKitPlugin extends Plugin
 		TradeUploader up = new TradeUploader(api, gson, this::onUploaded, store, this::shareEnabled);
 		up.setBackoff(backoff);
 		uploader = up;
+		deaths = new DeathReporter(api, store);
 		// Uploads left over from the last session (RuneLite closed, server down) go back in
 		// the queue; they are only sent if connected and sharing, like everything else.
 		UploadSpool sp = new UploadSpool(this::getPluginDirectory, gson);
@@ -410,6 +415,7 @@ public class HardcoreWorldToolKitPlugin extends Plugin
 		UploadSpool sp = spool;
 		tracker = null;
 		uploader = null;
+		deaths = null;
 		spool = null;
 		if (up != null)
 		{
@@ -493,6 +499,31 @@ public class HardcoreWorldToolKitPlugin extends Plugin
 	}
 
 	/* ------------------------------------------------------------ events */
+
+	@Subscribe
+	public void onChatMessage(ChatMessage e)
+	{
+		DeathReporter d = deaths;
+		if (d == null || !deathsOn() || (e.getType() != ChatMessageType.BROADCAST && e.getType() != ChatMessageType.GAMEMESSAGE))
+		{
+			return;
+		}
+		DeathBroadcast b = DeathBroadcast.parse(e.getMessage());
+		if (b != null)
+		{
+			d.broadcast(b, client.getLocalPlayer() == null ? null : client.getLocalPlayer().getName(), now());
+		}
+	}
+
+	@Subscribe
+	public void onActorDeath(ActorDeath e)
+	{
+		DeathReporter d = deaths;
+		if (d != null && deathsOn() && e.getActor() == client.getLocalPlayer())
+		{
+			d.ownDeath(WorldPoint.fromLocalInstance(client, e.getActor().getLocalLocation()), now());
+		}
+	}
 
 	@Subscribe
 	public void onGameStateChanged(GameStateChanged e)
@@ -1466,6 +1497,11 @@ public class HardcoreWorldToolKitPlugin extends Plugin
 		try
 		{
 			flush();
+			DeathReporter d = deaths;
+			if (d != null && config.connected() && config.shareDeaths())
+			{
+				d.tick(now());
+			}
 		}
 		catch (RuntimeException ex)
 		{
@@ -1588,6 +1624,11 @@ public class HardcoreWorldToolKitPlugin extends Plugin
 	private boolean isTrackedWorld()
 	{
 		return devAnyWorld || client.getWorldType().contains(WorldType.HARDCORE_MAIN);
+	}
+
+	private boolean deathsOn()
+	{
+		return config.connected() && config.shareDeaths() && isTrackedWorld();
 	}
 
 	private static long now()

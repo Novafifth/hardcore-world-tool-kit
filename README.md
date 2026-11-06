@@ -43,6 +43,7 @@ Under **Configuration > Hardcore World Tool Kit**, or the gear button in the pan
 |---|---|---|
 | Connect to Hardcore World Tool Kit server | Off | Shows the shared market data and shares your trades |
 | Share my trades | On | What is shared while connected |
+| Share deaths | On | While connected, where Hardcore players die and what killed them (no names) |
 | Open item when setting up a GE offer | On | Shows the item in the side panel |
 | Switch to this panel for GE offers | On | Off: the item still opens here, but whatever panel is open stays on top (handy with another price plugin) |
 | Right-click "HC prices" | On | The menu option on tradeable items that opens them in the panel |
@@ -58,6 +59,8 @@ Under **Configuration > Hardcore World Tool Kit**, or the gear button in the pan
 - Once connected, the plugin shares your own Hardcore World Grand Exchange trades and open offers (item, price,
   quantity, time). They are sent with a random install id and a hashed account id. Your name is never sent, and the
   server never stores IP addresses.
+- With **Share deaths** on, it also sends the region and killer of each death broadcast you see (never the name of who died;
+  no killer is sent for Wilderness deaths, where it may be a player), and the tile of your own deaths.
 - **Delete my shared data** in the panel (while connected) removes everything your computer has shared. You can turn
   sharing off at any time.
 - The full privacy notice:

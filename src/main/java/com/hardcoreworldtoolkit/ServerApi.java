@@ -41,6 +41,7 @@ class ServerApi
 	private final HttpUrl registerUrl;
 	private final HttpUrl submitUrl;
 	private final HttpUrl meUrl;
+	private final HttpUrl deathsUrl;
 
 	ServerApi(OkHttpClient http, Gson gson, HttpUrl base, HardcoreWorldToolKitConfig config)
 	{
@@ -50,6 +51,7 @@ class ServerApi
 		this.registerUrl = base.newBuilder().addPathSegments("v1/register").build();
 		this.submitUrl = base.newBuilder().addPathSegments("v1/submit").build();
 		this.meUrl = base.newBuilder().addPathSegments("v1/me").build();
+		this.deathsUrl = base.newBuilder().addPathSegments("v1/deaths").build();
 	}
 
 	/** HTTP request: POST v1/register with the install id, for a new install token. Only while connected. */
@@ -74,6 +76,20 @@ class ServerApi
 		}
 		http.newCall(new Request.Builder()
 			.url(submitUrl)
+			.header("Authorization", "Bearer " + token)
+			.post(RequestBody.create(JSON, gson.toJson(body)))
+			.build()).enqueue(callback);
+	}
+
+	/** HTTP request: POST v1/deaths, one death (region, killer, own tile) with the install token. Only while connected and sharing deaths. */
+	void postDeath(String token, JsonObject body, Callback callback)
+	{
+		if (!config.connected() || !config.shareDeaths())
+		{
+			throw new NotConnectedException("Not connected or not sharing deaths: death not sent");
+		}
+		http.newCall(new Request.Builder()
+			.url(deathsUrl)
 			.header("Authorization", "Bearer " + token)
 			.post(RequestBody.create(JSON, gson.toJson(body)))
 			.build()).enqueue(callback);

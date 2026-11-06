@@ -19,6 +19,7 @@ public interface HardcoreWorldToolKitConfig extends Config
 	 */
 	int STATS_NOTICE = 2;
 	String KEY_SHARE = "shareTrades";
+	String KEY_SHARE_DEATHS = "shareDeaths";
 	String KEY_LOCAL_LOG = "saveLocalLog";
 	String KEY_AUTO_OPEN = "autoOpenFromGe";
 	String KEY_GE_SWITCH = "geSwitchPanel";
@@ -85,6 +86,18 @@ public interface HardcoreWorldToolKitConfig extends Config
 		section = SECTION_SHARING
 	)
 	default boolean shareTrades()
+	{
+		return true;
+	}
+
+	@ConfigItem(
+		keyName = KEY_SHARE_DEATHS,
+		name = "Share deaths",
+		description = "While connected, upload where Hardcore players die and what killed them, from death broadcasts and your own deaths (never names)",
+		position = 2,
+		section = SECTION_SHARING
+	)
+	default boolean shareDeaths()
 	{
 		return true;
 	}
