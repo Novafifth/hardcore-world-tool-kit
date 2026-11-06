@@ -156,7 +156,7 @@ final class Icons
 		return img;
 	}
 
-	/** The statistics icon with a small red dot, until the button has been clicked once. */
+	/** The statistics icon with a small red dot, until the button has been clicked since the last site update (STATS_NOTICE). */
 	static ImageIcon statsNew()
 	{
 		if (statsNew == null)

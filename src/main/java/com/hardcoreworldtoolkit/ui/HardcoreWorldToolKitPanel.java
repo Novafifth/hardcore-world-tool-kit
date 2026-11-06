@@ -299,16 +299,16 @@ public class HardcoreWorldToolKitPanel extends PluginPanel
 		gear.setFocusPainted(false);
 		gear.setToolTipText(GEAR_TOOLTIP);
 		gear.addActionListener(e -> openConfig.run());
-		JButton stats = new JButton(config.statsSeen() ? Icons.stats() : Icons.statsNew());
+		JButton stats = new JButton(config.statsNoticeSeen() >= HardcoreWorldToolKitConfig.STATS_NOTICE ? Icons.stats() : Icons.statsNew());
 		stats.setPreferredSize(new Dimension(HEADER_HEIGHT, HEADER_HEIGHT));
 		stats.setFocusPainted(false);
 		stats.setToolTipText(STATS_TOOLTIP);
 		stats.addActionListener(e ->
 		{
 			LinkBrowser.browse(STATS_URL);
-			if (!config.statsSeen())
+			if (config.statsNoticeSeen() < HardcoreWorldToolKitConfig.STATS_NOTICE)
 			{
-				configManager.setConfiguration(HardcoreWorldToolKitConfig.GROUP, HardcoreWorldToolKitConfig.KEY_STATS_SEEN, true);
+				configManager.setConfiguration(HardcoreWorldToolKitConfig.GROUP, HardcoreWorldToolKitConfig.KEY_STATS_NOTICE_SEEN, HardcoreWorldToolKitConfig.STATS_NOTICE);
 				stats.setIcon(Icons.stats());
 			}
 		});

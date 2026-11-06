@@ -12,7 +12,12 @@ public interface HardcoreWorldToolKitConfig extends Config
 {
 	String GROUP = "hardcore-world-tool-kit";
 	String KEY_CONNECTED = "connected";
-	String KEY_STATS_SEEN = "statsSeen";
+	String KEY_STATS_NOTICE_SEEN = "statsNoticeSeen";
+	/**
+	 * The statistics button shows a red dot until it has been clicked once since this number last went up. Raise it when
+	 * the website has something new to show, so everyone sees the dot again.
+	 */
+	int STATS_NOTICE = 2;
 	String KEY_SHARE = "shareTrades";
 	String KEY_LOCAL_LOG = "saveLocalLog";
 	String KEY_AUTO_OPEN = "autoOpenFromGe";
@@ -169,10 +174,10 @@ public interface HardcoreWorldToolKitConfig extends Config
 		return true;
 	}
 
-	/** Whether the statistics button was clicked once (its red dot then goes away). */
-	@ConfigItem(keyName = KEY_STATS_SEEN, name = "", description = "", hidden = true)
-	default boolean statsSeen()
+	/** The last STATS_NOTICE the player clicked the statistics button for (its red dot shows while this is lower). */
+	@ConfigItem(keyName = KEY_STATS_NOTICE_SEEN, name = "", description = "", hidden = true)
+	default int statsNoticeSeen()
 	{
-		return false;
+		return 0;
 	}
 }
