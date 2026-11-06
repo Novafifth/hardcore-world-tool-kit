@@ -266,7 +266,8 @@ public class HardcoreWorldToolKitPlugin extends Plugin
 		TradeUploader up = new TradeUploader(api, gson, this::onUploaded, store, this::shareEnabled);
 		up.setBackoff(backoff);
 		uploader = up;
-		deaths = new DeathReporter(api, store);
+		// The dev client sends every death broadcast it sees.
+		deaths = new DeathReporter(api, store, developerMode ? 1 : DeathReporter.REPORT_ONE_IN);
 		// Uploads left over from the last session (RuneLite closed, server down) go back in
 		// the queue; they are only sent if connected and sharing, like everything else.
 		UploadSpool sp = new UploadSpool(this::getPluginDirectory, gson);

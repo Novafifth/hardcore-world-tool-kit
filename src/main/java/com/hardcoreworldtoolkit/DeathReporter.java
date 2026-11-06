@@ -14,7 +14,7 @@ class DeathReporter
 {
 	private static final long OWN_WAIT = 60;
 	/** Everyone online sees each broadcast: each player sends about one in this many (always their own death). */
-	private static final int REPORT_ONE_IN = 5;
+	static final int REPORT_ONE_IN = 5;
 	private static final Callback IGNORE = new Callback()
 	{
 		@Override
@@ -31,13 +31,16 @@ class DeathReporter
 
 	private final ServerApi api;
 	private final ServerIdentity identity;
+	private final int oneIn;
 	private WorldPoint ownTile;
 	private long ownAt;
 
-	DeathReporter(ServerApi api, ServerIdentity identity)
+	/** oneIn: send about one in this many broadcasts of other players' deaths (1: every one). */
+	DeathReporter(ServerApi api, ServerIdentity identity, int oneIn)
 	{
 		this.api = api;
 		this.identity = identity;
+		this.oneIn = Math.max(1, oneIn);
 	}
 
 	synchronized void ownDeath(WorldPoint tile, long now)
@@ -55,7 +58,7 @@ class DeathReporter
 			send(d.getText(), ownTile, now);
 			ownTile = null;
 		}
-		else if (ThreadLocalRandom.current().nextInt(REPORT_ONE_IN) == 0)
+		else if (ThreadLocalRandom.current().nextInt(oneIn) == 0)
 		{
 			send(d.getText(), null, now);
 		}
