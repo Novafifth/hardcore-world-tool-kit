@@ -93,7 +93,7 @@ public interface HardcoreWorldToolKitConfig extends Config
 	@ConfigItem(
 		keyName = KEY_SHARE_DEATHS,
 		name = "Share deaths",
-		description = "While connected, upload where Hardcore players die and what killed them, from death broadcasts and your own deaths (never names)",
+		description = "While connected, upload the death broadcasts you see and where you die",
 		position = 2,
 		section = SECTION_SHARING
 	)
