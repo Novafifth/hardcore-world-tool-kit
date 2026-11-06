@@ -9,8 +9,8 @@ import net.runelite.client.util.Text;
 @Value
 class DeathBroadcast
 {
-	private static final Pattern KILLED = Pattern.compile(".+? killed (.+?)\\(\\d+\\) with an? \\d+ damage hit in .+", Pattern.CASE_INSENSITIVE);
-	private static final Pattern DIED = Pattern.compile("(.+?)\\(\\d+\\) was killed by an? \\d+ damage hit in .+", Pattern.CASE_INSENSITIVE);
+	private static final Pattern KILLED = Pattern.compile(".+? killed (.+?)\\(\\d+\\) with an? \\d+ damage hit.*", Pattern.CASE_INSENSITIVE);
+	private static final Pattern DIED = Pattern.compile("(.+?)\\(\\d+\\) was killed by an? \\d+ damage hit.*", Pattern.CASE_INSENSITIVE);
 
 	String text;
 	String victim;
