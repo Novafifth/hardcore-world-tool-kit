@@ -82,6 +82,7 @@ final class ItemSections
 	}
 
 	static final String TYPICAL_LABEL = "Typical (confirmed)";
+	static final String ALCH_LABEL = "High alch";
 
 	/**
 	 * The stats grid: last bought / sold, 24h averages, best bid / ask, plus "Typical (confirmed)" (the trusted
@@ -97,6 +98,12 @@ final class ItemSections
 	 * newest confirmed trade is (the median can span the last 7 days) and how many players it comes from.
 	 */
 	static List<StatCell> statCells(MarketData.Summary s, long now)
+	{
+		return statCells(s, null, now);
+	}
+
+	/** {@link #statCells(MarketData.Summary, long)} plus, last, what High Level Alchemy pays (null: not shown). */
+	static List<StatCell> statCells(MarketData.Summary s, Integer highAlch, long now)
 	{
 		List<StatCell> cells = new ArrayList<>();
 		cells.add(new StatCell("Last bought", Format.gp(s.getLastBuy()), Format.ago(s.getLastBuyTime(), now), Accent.BUY, null));
@@ -116,6 +123,11 @@ final class ItemSections
 					+ (age.isEmpty() ? "" : "; the newest of them was " + ("now".equals(age) ? "just now" : age + " ago"))
 					+ ". Confirmed trades come from established players at a normal price, or were matched by another "
 					+ "player's report."));
+		}
+		if (highAlch != null && highAlch > 0)
+		{
+			cells.add(new StatCell(ALCH_LABEL, Format.gp((long) highAlch), null, Accent.NEUTRAL,
+				"What High Level Alchemy pays for one. It pays to alch when you buy for less than this minus a nature rune."));
 		}
 		return cells;
 	}

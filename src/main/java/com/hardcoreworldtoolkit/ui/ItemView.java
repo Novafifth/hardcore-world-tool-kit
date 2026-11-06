@@ -41,6 +41,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.function.BiConsumer;
+import java.util.function.IntConsumer;
 import java.util.function.Supplier;
 import javax.swing.Box;
 import javax.swing.JButton;
@@ -117,7 +119,12 @@ class ItemView
 	private Object shownStats;
 	private MarketData.Book shownBook;
 	/** The shown item's latest market summary, to compare your offers with; null until loaded. */
+	private static final int GRID_CELLS = 6;
 	private MarketData.Summary summary;
+	/** Looks up what High Level Alchemy pays for an item and answers on the EDT (0: unknown); null: not shown. */
+	private BiConsumer<Integer, IntConsumer> alchLookup;
+	/** The current item's high alch value, or null until known. */
+	private Integer highAlch;
 	/** The shown item's recent market trades, for the live fills your offers are compared with. */
 	private List<MarketData.Trade> marketTrades = Collections.emptyList();
 	private boolean hasDetail;
@@ -320,6 +327,11 @@ class ItemView
 	}
 
 	/** Switch to {@code itemId}, clearing the old item's data; does nothing if it is already shown. */
+	void setAlchLookup(BiConsumer<Integer, IntConsumer> lookup)
+	{
+		alchLookup = lookup;
+	}
+
 	void open(int itemId, String name)
 	{
 		if (itemId == currentItem)
@@ -327,6 +339,19 @@ class ItemView
 			return;
 		}
 		currentItem = itemId;
+		highAlch = null;
+		if (alchLookup != null)
+		{
+			alchLookup.accept(itemId, value ->
+			{
+				if (currentItem == itemId && value > 0)
+				{
+					highAlch = value;
+					shownStats = null;
+					renderStats(summary);
+				}
+			});
+		}
 		currentItemName = name;
 		uploadRefresh.stop();
 		itemManager.getImage(itemId).addTo(iconLabel);
@@ -477,7 +502,7 @@ class ItemView
 			return;
 		}
 		// The "ago" notes change with time even when the data doesn't.
-		Object key = Arrays.asList(s, ago(s.getLastBuyTime()), ago(s.getLastSellTime()), ago(s.getTrustedPriceTime()));
+		Object key = Arrays.asList(s, ago(s.getLastBuyTime()), ago(s.getLastSellTime()), ago(s.getTrustedPriceTime()), highAlch);
 		if (key.equals(shownStats))
 		{
 			return;
@@ -486,21 +511,22 @@ class ItemView
 		statsSection.removeAll();
 		JPanel grid = new JPanel(new GridLayout(0, 2, 4, 4));
 		grid.setOpaque(false);
-		List<ItemSections.StatCell> cells = ItemSections.statCells(s);
-		int paired = cells.size() - cells.size() % 2;
+		List<ItemSections.StatCell> cells = ItemSections.statCells(s, highAlch, Instant.now().getEpochSecond());
+		// The six price cells in pairs; the ones after them (the typical price, whose note is long, and high alch) get
+		// the whole row each, so their values aren't cut off.
+		int paired = Math.min(GRID_CELLS, cells.size());
 		for (ItemSections.StatCell c : cells.subList(0, paired))
 		{
 			grid.add(statCell(c));
 		}
 		grid.setAlignmentX(Component.LEFT_ALIGNMENT);
 		statsSection.add(grid);
-		if (paired < cells.size())
+		for (ItemSections.StatCell c : cells.subList(paired, cells.size()))
 		{
-			// An odd last cell (the typical price, whose note is long) gets the whole row, so its value isn't cut off.
 			JPanel row = new JPanel(new BorderLayout());
 			row.setOpaque(false);
 			row.setBorder(new EmptyBorder(4, 0, 0, 0));
-			row.add(statCell(cells.get(paired)), BorderLayout.CENTER);
+			row.add(statCell(c), BorderLayout.CENTER);
 			row.setMaximumSize(new Dimension(Integer.MAX_VALUE, row.getPreferredSize().height));
 			row.setAlignmentX(Component.LEFT_ALIGNMENT);
 			statsSection.add(row);

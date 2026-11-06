@@ -84,6 +84,13 @@ public class ItemSectionsTest
 		MarketData.Summary noVotes = gson.fromJson("{\"trustedPrice\":900,\"trustedPriceTime\":" + (now - 120) + "}",
 			MarketData.Summary.class);
 		assertEquals("2m", ItemSections.statCells(noVotes, now).get(6).getSub());
+
+
+		// High alch, when the game knows it, comes last: after the typical price.
+		List<ItemSections.StatCell> withAlch = ItemSections.statCells(noVotes, 1200, now);
+		assertEquals(ItemSections.ALCH_LABEL, withAlch.get(7).getLabel());
+		assertEquals(8, withAlch.size());
+		assertEquals(7, ItemSections.statCells(noVotes, 0, now).size());
 	}
 
 	@Test

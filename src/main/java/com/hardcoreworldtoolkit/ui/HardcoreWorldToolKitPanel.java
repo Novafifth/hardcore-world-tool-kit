@@ -30,6 +30,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.function.BiConsumer;
+import java.util.function.IntConsumer;
 import java.util.function.Supplier;
 import javax.swing.Box;
 import javax.swing.JButton;
@@ -799,6 +801,12 @@ public class HardcoreWorldToolKitPanel extends PluginPanel
 	/* -------------------------------------------------------------- item */
 
 	/** Open the item view (from search, a feed row, the GE, or the right-click menu). */
+	/** See {@link ItemView#setAlchLookup}. */
+	public void setAlchLookup(BiConsumer<Integer, IntConsumer> lookup)
+	{
+		itemView.setAlchLookup(lookup);
+	}
+
 	public void openItem(int itemId, String name)
 	{
 		searchDebounce.stop();

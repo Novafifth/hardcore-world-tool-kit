@@ -345,6 +345,12 @@ public class HardcoreWorldToolKitPlugin extends Plugin
 					w.refresh(true);
 				}
 			}, this::rebuildProfit, sharedDataActions());
+		// What High Level Alchemy pays, from the game's item definition (client thread), shown in the item's prices.
+		panel.setAlchLookup((id, answer) -> clientThread.invoke(() ->
+		{
+			int value = itemManager.getItemComposition(id).getHaPrice();
+			SwingUtilities.invokeLater(() -> answer.accept(value));
+		}));
 		navButton = NavigationButton.builder()
 			.tooltip("Hardcore World Tool Kit")
 			.icon(buildIcon())
