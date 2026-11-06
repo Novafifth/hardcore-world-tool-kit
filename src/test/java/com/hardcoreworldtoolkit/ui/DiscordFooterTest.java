@@ -1,7 +1,6 @@
 package com.hardcoreworldtoolkit.ui;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import java.awt.Container;
 import java.awt.image.BufferedImage;
@@ -12,23 +11,15 @@ import org.junit.Test;
 public class DiscordFooterTest
 {
 	@Test
-	public void buttonOpensTheInvite() throws Exception
+	public void holdsTheGivenButton() throws Exception
 	{
-		int[] opened = {0, 0};
 		SwingUtilities.invokeAndWait(() ->
 		{
-			DiscordFooter footer = new DiscordFooter(() -> opened[0]++, () -> opened[1]++);
-			JButton button = (JButton) ((Container) footer.getComponent()).getComponent(0);
-			assertEquals(DiscordFooter.BUTTON_TEXT, button.getText());
-			assertNotNull(button.getIcon());
-			button.doClick();
-			JButton heart = (JButton) ((Container) footer.getComponent()).getComponent(1);
-			assertNotNull(heart.getIcon());
-			heart.doClick();
+			JButton button = new JButton("Market Dashboard");
+			DiscordFooter footer = new DiscordFooter(button);
+			assertEquals(button, ((Container) footer.getComponent()).getComponent(0));
+			assertEquals(1, ((Container) footer.getComponent()).getComponentCount());
 		});
-		assertEquals(1, opened[0]);
-		assertEquals(1, opened[1]);
-		assertTrue(DiscordFooter.SUPPORT_URL, DiscordFooter.SUPPORT_URL.startsWith("https://hardcore.malkana.dev/"));
 		assertTrue(DiscordFooter.INVITE_URL, DiscordFooter.INVITE_URL.startsWith("https://discord.com/invite/"));
 	}
 

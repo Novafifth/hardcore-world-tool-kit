@@ -32,6 +32,11 @@ import net.runelite.client.ui.FontManager;
  */
 class WelcomeCard
 {
+	static final String[] BENEFITS = {
+		"Real Hardcore GE prices from other players' trades",
+		"Today's bond swap rate (Hardcore gp to OSRS gp)",
+		"Price charts and the best bid and ask for every item",
+	};
 	static final String SHARED_TEXT = "Shared: item, price, quantity, time, a hashed account ID and a random install ID."
 		+ " Never your name. IP addresses are never stored.";
 
@@ -105,11 +110,10 @@ class WelcomeCard
 
 		card.removeAll();
 		boolean connect = step == Onboarding.Step.CONNECT || step == Onboarding.Step.CONNECT_AND_IMPORT;
-		boolean importSteps = step == Onboarding.Step.IMPORT || step == Onboarding.Step.CONNECT_AND_IMPORT;
 		boolean showNotice = notice != null && step != Onboarding.Step.HIDDEN;
-		if (connect || importSteps)
+		if (connect)
 		{
-			JLabel title = new JLabel("Get started");
+			JLabel title = new JLabel("See live Hardcore GE prices");
 			title.setFont(FontManager.getRunescapeBoldFont());
 			title.setForeground(Color.WHITE);
 			title.setAlignmentX(Component.LEFT_ALIGNMENT);
@@ -119,7 +123,7 @@ class WelcomeCard
 		if (showNotice)
 		{
 			card.add(noticeRow(notice));
-			if (connect || importSteps)
+			if (connect)
 			{
 				card.add(Box.createVerticalStrut(6));
 			}
@@ -128,30 +132,24 @@ class WelcomeCard
 		{
 			addConnectBlock();
 		}
-		if (importSteps)
-		{
-			if (connect)
-			{
-				card.add(Box.createVerticalStrut(8));
-				card.add(divider());
-				card.add(Box.createVerticalStrut(8));
-			}
-			addImportBlock(needsLogin);
-		}
-		wrapper.setVisible(connect || importSteps || showNotice);
+		wrapper.setVisible(connect || showNotice);
 		wrapper.revalidate();
 		wrapper.repaint();
 	}
 
 	private void addConnectBlock()
 	{
-		card.add(wrapText("See Hardcore World prices from every plugin user and share your trades.", ColorScheme.TEXT_COLOR));
+		card.add(wrapText("Join 3,000+ players already using it.", PanelComponents.GOOD));
 		card.add(Box.createVerticalStrut(4));
-		card.add(wrapText(SHARED_TEXT, ColorScheme.TEXT_COLOR));
-		card.add(Box.createVerticalStrut(6));
-		JPanel row = new JPanel(new BorderLayout(8, 0));
-		row.setOpaque(false);
+		for (String b : BENEFITS)
+		{
+			card.add(wrapText("• " + b, ColorScheme.TEXT_COLOR));
+		}
+		card.add(Box.createVerticalStrut(10));
 		JButton connect = primaryButton("Connect");
+		connect.setPreferredSize(new Dimension(0, 34));
+		connect.setMaximumSize(new Dimension(Integer.MAX_VALUE, 34));
+		connect.setAlignmentX(Component.LEFT_ALIGNMENT);
 		connect.addActionListener(e ->
 		{
 			if (confirmConnect.confirm(card))
@@ -159,26 +157,10 @@ class WelcomeCard
 				onConnect.run();
 			}
 		});
-		row.add(connect, BorderLayout.WEST);
-		JLabel privacy = linkLabel("Privacy", onPrivacy);
-		row.add(privacy, BorderLayout.CENTER);
-		row.setAlignmentX(Component.LEFT_ALIGNMENT);
-		row.setMaximumSize(new Dimension(Integer.MAX_VALUE, row.getPreferredSize().height));
-		card.add(row);
-	}
-
-	private void addImportBlock(boolean needsLogin)
-	{
-		card.add(line("Import your GE History:", Color.WHITE));
-		// One component type for all steps, so they line up.
-		card.add(wrapText("1. Open the Grand Exchange.", ColorScheme.TEXT_COLOR));
-		card.add(wrapText("2. Click the History button.", ColorScheme.TEXT_COLOR));
-		card.add(wrapText("3. Done. Your past trades are added.", ColorScheme.TEXT_COLOR));
-		if (needsLogin)
-		{
-			card.add(Box.createVerticalStrut(2));
-			card.add(line("Log in on a Hardcore World first.", ColorScheme.LIGHT_GRAY_COLOR));
-		}
+		card.add(connect);
+		card.add(Box.createVerticalStrut(8));
+		card.add(wrapText(SHARED_TEXT, ColorScheme.LIGHT_GRAY_COLOR));
+		card.add(linkLabel("Privacy", onPrivacy));
 	}
 
 	private JComponent noticeRow(int count)
@@ -203,23 +185,5 @@ class WelcomeCard
 	{
 		return count == 0 ? "GE History read: no trades to import"
 			: "Imported " + count + " trade" + (count == 1 ? "" : "s") + " from GE History";
-	}
-
-	/** A thin line between the card's two parts. */
-	private static JComponent divider()
-	{
-		JPanel line = new JPanel();
-		line.setBackground(ColorScheme.MEDIUM_GRAY_COLOR);
-		line.setPreferredSize(new Dimension(1, 1));
-		line.setMaximumSize(new Dimension(Integer.MAX_VALUE, 1));
-		line.setAlignmentX(Component.LEFT_ALIGNMENT);
-		return line;
-	}
-
-	private static JComponent line(String text, Color color)
-	{
-		JLabel l = smallLabel(text, color);
-		l.setAlignmentX(Component.LEFT_ALIGNMENT);
-		return l;
 	}
 }

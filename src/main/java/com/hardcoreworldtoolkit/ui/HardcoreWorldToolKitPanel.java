@@ -79,7 +79,7 @@ public class HardcoreWorldToolKitPanel extends PluginPanel
 	/** "from=plugin" lets the site count how often it is opened from here (a total, nothing about the player). */
 	/** The plugin's privacy notice, on the Hardcore World Tool Kit site. */
 	static final String PRIVACY_URL = "https://hardcore.malkana.dev/privacy";
-	static final String STATS_URL = "https://hardcore.malkana.dev/?from=plugin";
+	static final String STATS_URL = "https://hardcore.malkana.dev/?from=plugin&utm_source=plugin&utm_medium=stats_button";
 	static final String STATS_TOOLTIP = "Opens the Hardcore Worlds statistics page (Market Watch) in your browser";
 	static final String GEAR_TOOLTIP = "Settings: RuneLite Configuration > Hardcore World Tool Kit";
 	static final String DELETE_ITEM = "Delete my shared data...";
@@ -132,6 +132,7 @@ public class HardcoreWorldToolKitPanel extends PluginPanel
 	private final HomeView homeView;
 	/** What the sidebar shows: the scrolling panel with the Discord button pinned under it. Built on first use. */
 	private JPanel pinned;
+	private JButton stats;
 	private final ItemView itemView;
 	private final Timer refreshTimer;
 	private long bondAt;
@@ -271,7 +272,7 @@ public class HardcoreWorldToolKitPanel extends PluginPanel
 		onConfigChanged();
 	}
 
-	/** The Discord button stays at the bottom of the sidebar while the panel above it scrolls. */
+	/** The Market Dashboard button stays at the bottom of the sidebar while the panel above it scrolls. */
 	@Override
 	public JPanel getWrappedPanel()
 	{
@@ -279,9 +280,7 @@ public class HardcoreWorldToolKitPanel extends PluginPanel
 		{
 			pinned = new JPanel(new BorderLayout());
 			pinned.add(super.getWrappedPanel(), BorderLayout.CENTER);
-			pinned.add(new DiscordFooter(() -> LinkBrowser.browse(DiscordFooter.INVITE_URL),
-				() -> LinkBrowser.browse(DiscordFooter.SUPPORT_URL)).getComponent(),
-				BorderLayout.SOUTH);
+			pinned.add(new DiscordFooter(stats).getComponent(), BorderLayout.SOUTH);
 		}
 		return pinned;
 	}
@@ -301,8 +300,7 @@ public class HardcoreWorldToolKitPanel extends PluginPanel
 		gear.setFocusPainted(false);
 		gear.setToolTipText(GEAR_TOOLTIP);
 		gear.addActionListener(e -> openConfig.run());
-		JButton stats = new JButton(config.statsNoticeSeen() >= HardcoreWorldToolKitConfig.STATS_NOTICE ? Icons.stats() : Icons.statsNew());
-		stats.setPreferredSize(new Dimension(HEADER_HEIGHT, HEADER_HEIGHT));
+		stats = new JButton("Market Dashboard", config.statsNoticeSeen() >= HardcoreWorldToolKitConfig.STATS_NOTICE ? Icons.stats() : Icons.statsNew());
 		stats.setFocusPainted(false);
 		stats.setToolTipText(STATS_TOOLTIP);
 		stats.addActionListener(e ->
@@ -316,7 +314,12 @@ public class HardcoreWorldToolKitPanel extends PluginPanel
 		});
 		JPanel buttons = new JPanel(new java.awt.GridLayout(1, 2, 4, 0));
 		buttons.setOpaque(false);
-		buttons.add(stats);
+		JButton discord = new JButton(Icons.discord());
+		discord.setPreferredSize(new Dimension(HEADER_HEIGHT, HEADER_HEIGHT));
+		discord.setFocusPainted(false);
+		discord.setToolTipText("Join the Hardcore World Tool Kit Discord");
+		discord.addActionListener(e -> LinkBrowser.browse(DiscordFooter.INVITE_URL));
+		buttons.add(discord);
 		buttons.add(gear);
 		searchRow.add(buttons, BorderLayout.EAST);
 		searchRow.setAlignmentX(Component.LEFT_ALIGNMENT);

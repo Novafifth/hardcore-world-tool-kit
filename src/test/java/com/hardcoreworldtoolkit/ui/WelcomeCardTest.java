@@ -92,8 +92,7 @@ public class WelcomeCardTest
 			assertFalse(text, text.contains("submits your IP address to a 3rd-party server"));
 			assertFalse(WelcomeCard.SHARED_TEXT, WelcomeCard.SHARED_TEXT.contains("your IP address"));
 			assertTrue(WelcomeCard.SHARED_TEXT, WelcomeCard.SHARED_TEXT.contains("IP addresses are never stored"));
-			assertTrue(text, text.contains("2. Click the History button."));
-			assertTrue(text, text.contains("Log in on a Hardcore World first."));
+			assertFalse(text, text.contains("Import your GE History"));
 
 			// Same state: nothing is rebuilt.
 			Component first = card(c).getComponent(0);
@@ -110,10 +109,7 @@ public class WelcomeCardTest
 			assertEquals(1, connects.get());
 
 			c.update(Onboarding.Step.IMPORT, false, null);
-			text = allText(c.getComponent());
-			assertFalse(text, text.contains("[Connect]"));
-			assertFalse(text, text.contains("Log in on a Hardcore World first."));
-			assertTrue(text, text.contains("1. Open the Grand Exchange."));
+			assertFalse(c.getComponent().isVisible());
 
 			c.update(Onboarding.Step.IMPORTED_NOTICE, false, 12);
 			text = allText(c.getComponent());

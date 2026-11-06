@@ -39,7 +39,7 @@ import net.runelite.client.util.QuantityFormatter;
  */
 class HomeView
 {
-	static final String NOT_CONNECTED = "Connect with the \"Get started\" card above, or in the plugin's settings (gear icon), to see the market.";
+	static final String NOT_CONNECTED = "Live prices, the swap rate and price charts show here once you connect (the card above, or the gear icon).";
 
 	private final JPanel panel = column();
 	private final JLabel statsLabel = mutedLabel("");
