@@ -20,6 +20,10 @@ class DeathBroadcast
 		String m = Text.removeTags(message).replace('\u00a0', ' ').trim();
 		Matcher k = KILLED.matcher(m);
 		Matcher d = DIED.matcher(m);
-		return k.matches() ? new DeathBroadcast(m, k.group(1)) : d.matches() ? new DeathBroadcast(m, d.group(1)) : null;
+		if (!k.matches() && !d.matches())
+		{
+			return null;
+		}
+		return new DeathBroadcast(m, (k.matches() ? k.group(1) : d.group(1)).replaceAll("@[a-z_]+@", ""));
 	}
 }
