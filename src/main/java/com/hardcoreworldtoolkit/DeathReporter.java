@@ -2,6 +2,7 @@ package com.hardcoreworldtoolkit;
 
 import com.google.gson.JsonObject;
 import java.io.IOException;
+import java.util.concurrent.ThreadLocalRandom;
 import net.runelite.api.coords.WorldPoint;
 import net.runelite.client.util.Text;
 import okhttp3.Call;
@@ -12,6 +13,8 @@ import okhttp3.Response;
 class DeathReporter
 {
 	private static final long OWN_WAIT = 60;
+	/** Everyone online sees each broadcast: each player sends about one in this many (always their own death). */
+	private static final int REPORT_ONE_IN = 5;
 	private static final Callback IGNORE = new Callback()
 	{
 		@Override
@@ -47,10 +50,14 @@ class DeathReporter
 	{
 		boolean own = ownTile != null && me != null && now - ownAt <= OWN_WAIT
 			&& Text.standardize(me).equals(Text.standardize(d.getVictim()));
-		send(d.getText(), own ? ownTile : null, now);
 		if (own)
 		{
+			send(d.getText(), ownTile, now);
 			ownTile = null;
+		}
+		else if (ThreadLocalRandom.current().nextInt(REPORT_ONE_IN) == 0)
+		{
+			send(d.getText(), null, now);
 		}
 	}
 
