@@ -57,6 +57,7 @@ import javax.swing.text.JTextComponent;
 import net.runelite.client.game.ItemManager;
 import net.runelite.client.ui.ColorScheme;
 import net.runelite.client.ui.FontManager;
+import net.runelite.client.util.LinkBrowser;
 import net.runelite.client.util.QuantityFormatter;
 
 /**
@@ -241,6 +242,12 @@ class ItemView
 		return currentItem;
 	}
 
+	/** The item's page on the Market Dashboard (the website). */
+	static String marketUrl(int itemId)
+	{
+		return "https://hardcore.malkana.dev/tools?from=plugin&utm_source=plugin&utm_medium=item_button#item=" + itemId;
+	}
+
 	private JComponent buildHeader()
 	{
 		JPanel top = new JPanel(new BorderLayout(6, 0));
@@ -265,6 +272,15 @@ class ItemView
 			}
 		});
 		right.add(refresh);
+		JButton market = iconButton(Icons.stats(), "Open this item on the Market Dashboard", 22);
+		market.addActionListener(e ->
+		{
+			if (hasItem())
+			{
+				LinkBrowser.browse(marketUrl(currentItem));
+			}
+		});
+		right.add(market);
 		top.add(right, BorderLayout.EAST);
 		top.setMaximumSize(new Dimension(Integer.MAX_VALUE, 28));
 		top.setAlignmentX(Component.LEFT_ALIGNMENT);
