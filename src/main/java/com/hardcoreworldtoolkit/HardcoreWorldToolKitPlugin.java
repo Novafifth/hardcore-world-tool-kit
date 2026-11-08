@@ -37,6 +37,8 @@ import net.runelite.api.GrandExchangeOfferState;
 import net.runelite.api.ItemComposition;
 import net.runelite.api.MenuAction;
 import net.runelite.api.MenuEntry;
+import net.runelite.api.NPC;
+import net.runelite.api.Player;
 import net.runelite.api.ScriptID;
 import net.runelite.api.WorldType;
 import net.runelite.api.coords.WorldPoint;
@@ -45,6 +47,7 @@ import net.runelite.api.events.ChatMessage;
 import net.runelite.api.events.GameStateChanged;
 import net.runelite.api.events.GameTick;
 import net.runelite.api.events.GrandExchangeOfferChanged;
+import net.runelite.api.events.InteractingChanged;
 import net.runelite.api.events.MenuEntryAdded;
 import net.runelite.api.events.ScriptCallbackEvent;
 import net.runelite.api.events.ScriptPostFired;
@@ -53,6 +56,7 @@ import net.runelite.api.events.WidgetLoaded;
 import net.runelite.api.gameval.InterfaceID;
 import net.runelite.api.gameval.VarPlayerID;
 import net.runelite.api.widgets.Widget;
+import net.runelite.client.util.Text;
 import net.runelite.client.Notifier;
 import net.runelite.client.callback.ClientThread;
 import net.runelite.client.chat.ChatColorType;
@@ -174,6 +178,9 @@ public class HardcoreWorldToolKitPlugin extends Plugin
 	private volatile OfferTracker tracker;
 	private volatile TradeUploader uploader;
 	private volatile DeathReporter deaths;
+	/** The last monster that turned on the player, and the game tick it did (client thread only). */
+	private String lastAttacker;
+	private int lastAttackerTick = -1000;
 	/** Unsent uploads on disk, so closing RuneLite doesn't lose them. */
 	private volatile UploadSpool spool;
 	/** "Delete my shared data" (panel Privacy menu). */
@@ -527,10 +534,49 @@ public class HardcoreWorldToolKitPlugin extends Plugin
 	public void onActorDeath(ActorDeath e)
 	{
 		DeathReporter d = deaths;
-		if (d != null && deathsOn() && e.getActor() == client.getLocalPlayer())
+		Player me = client.getLocalPlayer();
+		if (d != null && deathsOn() && me != null && e.getActor() == me)
 		{
-			d.ownDeath(WorldPoint.fromLocalInstance(client, e.getActor().getLocalLocation()), now());
+			// Once, at the death: the monsters attacking the player then (and whether a player was).
+			List<String> on = new ArrayList<>();
+			boolean pk = false;
+			for (NPC n : client.getTopLevelWorldView().npcs())
+			{
+				String name = n.getInteracting() == me ? npcName(n) : null;
+				if (name != null)
+				{
+					on.add(name);
+				}
+			}
+			for (Player p : client.getTopLevelWorldView().players())
+			{
+				pk |= p != me && p.getInteracting() == me;
+			}
+			String killer = DeathReporter.killerOf(on, pk, lastAttacker, lastAttackerTick, client.getTickCount());
+			d.ownDeath(WorldPoint.fromLocalInstance(client, me.getLocalLocation()), killer, now());
 		}
+	}
+
+	/** The last monster that turned on the player (for the killer of an own death no broadcast names). */
+	@Subscribe
+	public void onInteractingChanged(InteractingChanged e)
+	{
+		Player me = client.getLocalPlayer();
+		if (me != null && e.getTarget() == me && e.getSource() instanceof NPC)
+		{
+			String name = npcName((NPC) e.getSource());
+			if (name != null)
+			{
+				lastAttacker = name;
+				lastAttackerTick = client.getTickCount();
+			}
+		}
+	}
+
+	private static String npcName(NPC n)
+	{
+		String name = n.getName() == null ? null : Text.removeTags(n.getName()).trim();
+		return name == null || name.isEmpty() || "null".equalsIgnoreCase(name) ? null : name;
 	}
 
 	@Subscribe
