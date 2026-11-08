@@ -26,4 +26,10 @@ class DeathBroadcast
 		}
 		return new DeathBroadcast(m, (k.matches() ? k.group(1) : d.group(1)).replaceAll("@[a-z_]+@", ""));
 	}
+
+	int level()
+	{
+		Matcher m = Pattern.compile(Pattern.quote(victim) + "\\((\\d{1,4})\\)").matcher(text);
+		return m.find() ? Integer.parseInt(m.group(1)) : -1;
+	}
 }

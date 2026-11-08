@@ -510,6 +510,7 @@ public class HardcoreWorldToolKitPlugin extends Plugin
 	@Subscribe
 	public void onChatMessage(ChatMessage e)
 	{
+		maybeDeathHint(e);
 		DeathReporter d = deaths;
 		if (d == null || !deathsOn() || (e.getType() != ChatMessageType.BROADCAST && e.getType() != ChatMessageType.GAMEMESSAGE))
 		{
@@ -564,6 +565,12 @@ public class HardcoreWorldToolKitPlugin extends Plugin
 	@Subscribe
 	public void onConfigChanged(ConfigChanged e)
 	{
+		if (HardcoreWorldToolKitConfig.GROUP.equals(e.getGroup()) && (HardcoreWorldToolKitConfig.KEY_HIDE_DEATHS.equals(e.getKey())
+			|| HardcoreWorldToolKitConfig.KEY_SHOW_FRIENDS_DEATHS.equals(e.getKey())))
+		{
+			clientThread.invoke(client::refreshChat);
+			return;
+		}
 		// Only the user-facing settings. Our own RS-profile saves (slot state on every offer update and heartbeat,
 		// completed, history) carry a profile, and installId isn't a setting; reacting to those rebuilt the panel
 		// and hit the server constantly.
@@ -651,6 +658,51 @@ public class HardcoreWorldToolKitPlugin extends Plugin
 		}
 	}
 
+	private void filterDeath()
+	{
+		int min = config.hideDeathsBelow();
+		if (min <= 0 || !isTrackedWorld())
+		{
+			return;
+		}
+		int[] ints = client.getIntStack();
+		int n = client.getIntStackSize();
+		ChatMessageType type = ChatMessageType.of(ints[n - 2]);
+		if (type != ChatMessageType.BROADCAST && type != ChatMessageType.GAMEMESSAGE)
+		{
+			return;
+		}
+		DeathBroadcast b = DeathBroadcast.parse((String) client.getObjectStack()[client.getObjectStackSize() - 1]);
+		if (b == null || b.level() < 0 || b.level() >= min || spared(b.getVictim().trim()))
+		{
+			return;
+		}
+		ints[n - 3] = 0;
+	}
+
+	private void maybeDeathHint(ChatMessage e)
+	{
+		if (config.deathHintShown() || config.hideDeathsBelow() > 0 || !isTrackedWorld()
+			|| (e.getType() != ChatMessageType.BROADCAST && e.getType() != ChatMessageType.GAMEMESSAGE)
+			|| DeathBroadcast.parse(e.getMessage()) == null)
+		{
+			return;
+		}
+		configManager.setConfiguration(HardcoreWorldToolKitConfig.GROUP, HardcoreWorldToolKitConfig.KEY_DEATH_HINT_SHOWN, true);
+		localChat("Tired of death broadcasts? Hide low levels in the Hardcore World Tool Kit settings, under Death broadcasts.");
+	}
+
+	private boolean spared(String name)
+	{
+		String me = client.getLocalPlayer() == null ? null : client.getLocalPlayer().getName();
+		if (me != null && name.equalsIgnoreCase(me.replace(' ', ' ')))
+		{
+			return true;
+		}
+		return config.showFriendsDeaths() && (client.isFriended(name, false)
+			|| (client.getClanChannel() != null && client.getClanChannel().findMember(name) != null));
+	}
+
 	/* ------------------------------------------------- GE offer setup text */
 
 	/**
@@ -662,6 +714,11 @@ public class HardcoreWorldToolKitPlugin extends Plugin
 	public void onScriptCallbackEvent(ScriptCallbackEvent e)
 	{
 		String name = e.getEventName();
+		if ("chatFilterCheck".equals(name))
+		{
+			filterDeath();
+			return;
+		}
 		if (!GE_BUY_EXAMINE.equals(name) && !GE_SELL_EXAMINE.equals(name))
 		{
 			return;
@@ -797,6 +854,7 @@ public class HardcoreWorldToolKitPlugin extends Plugin
 	private void resetHints()
 	{
 		configManager.unsetConfiguration(HardcoreWorldToolKitConfig.GROUP, HardcoreWorldToolKitConfig.KEY_HINT_SHOWN);
+		configManager.unsetConfiguration(HardcoreWorldToolKitConfig.GROUP, HardcoreWorldToolKitConfig.KEY_DEATH_HINT_SHOWN);
 		localChat(CHAT_HINT);
 		localChat("Dev: chat hint re-armed. It shows again on your next login on a Hardcore World when there is something to set up.");
 	}

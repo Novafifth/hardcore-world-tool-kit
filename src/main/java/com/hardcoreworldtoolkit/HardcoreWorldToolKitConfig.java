@@ -62,6 +62,41 @@ public interface HardcoreWorldToolKitConfig extends Config
 	)
 	String SECTION_LOCAL = "local";
 
+	@ConfigSection(
+		name = "Death broadcasts",
+		description = "Death broadcasts in the chatbox",
+		position = 4
+	)
+	String SECTION_CHAT = "chat";
+	String KEY_HIDE_DEATHS = "hideDeathsBelow";
+	String KEY_SHOW_FRIENDS_DEATHS = "showFriendsDeaths";
+	String KEY_DEATH_HINT_SHOWN = "deathHintShown";
+
+	@ConfigItem(
+		keyName = KEY_HIDE_DEATHS,
+		name = "Hide below level",
+		description = "Hide death broadcasts of players under this total level. 0 shows them all. Your own death always shows",
+		position = 0,
+		section = SECTION_CHAT
+	)
+	@Range(max = 2376)
+	default int hideDeathsBelow()
+	{
+		return 0;
+	}
+
+	@ConfigItem(
+		keyName = KEY_SHOW_FRIENDS_DEATHS,
+		name = "Always show friends and clan",
+		description = "Show the deaths of friends and clan mates whatever their total level",
+		position = 1,
+		section = SECTION_CHAT
+	)
+	default boolean showFriendsDeaths()
+	{
+		return true;
+	}
+
 	/**
 	 * Opt-in to contacting the Hardcore World Tool Kit server at all (viewing market data and sharing trades).
 	 */
@@ -200,6 +235,12 @@ public interface HardcoreWorldToolKitConfig extends Config
 	/** True once the player answered the card asking whether GE offers should open the sidebar. */
 	@ConfigItem(keyName = KEY_GE_OPEN_ASKED, name = "", description = "", hidden = true)
 	default boolean geOpenAsked()
+	{
+		return false;
+	}
+
+	@ConfigItem(keyName = KEY_DEATH_HINT_SHOWN, name = "", description = "", hidden = true)
+	default boolean deathHintShown()
 	{
 		return false;
 	}
