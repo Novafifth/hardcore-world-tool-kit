@@ -220,6 +220,7 @@ public class HardcoreWorldToolKitPanel extends PluginPanel
 			showCard(CARD_HOME);
 			refresh();
 		});
+		itemView.setGeAskActions(() -> answerGeAsk(false), () -> answerGeAsk(true));
 		feedConnected = config.connected();
 
 		setLayout(new BorderLayout(0, 8));
@@ -270,6 +271,16 @@ public class HardcoreWorldToolKitPanel extends PluginPanel
 		});
 		ticker = new Timer(TICK_MS, e -> tick());
 		onConfigChanged();
+	}
+
+	private void answerGeAsk(boolean keep)
+	{
+		configManager.setConfiguration(HardcoreWorldToolKitConfig.GROUP, HardcoreWorldToolKitConfig.KEY_GE_OPEN_ASKED, true);
+		if (!keep)
+		{
+			configManager.setConfiguration(HardcoreWorldToolKitConfig.GROUP, HardcoreWorldToolKitConfig.KEY_GE_SWITCH, false);
+		}
+		itemView.hideGeAsk(keep ? null : "Done. Turn it back on any time in the settings: Open the sidebar for GE offers.");
 	}
 
 	/** The Market Dashboard button stays at the bottom of the sidebar while the panel above it scrolls. */
@@ -812,6 +823,16 @@ public class HardcoreWorldToolKitPanel extends PluginPanel
 
 	public void openItem(int itemId, String name)
 	{
+		openItem(itemId, name, false);
+	}
+
+	/** @param askGe ask whether GE offers should keep opening the sidebar */
+	public void openItem(int itemId, String name, boolean askGe)
+	{
+		if (askGe)
+		{
+			itemView.showGeAsk();
+		}
 		searchDebounce.stop();
 		if (!searchField.getText().isEmpty())
 		{

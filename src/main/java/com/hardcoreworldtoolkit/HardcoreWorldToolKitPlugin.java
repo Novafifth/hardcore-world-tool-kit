@@ -645,7 +645,8 @@ public class HardcoreWorldToolKitPlugin extends Plugin
 			lastGeItem = itemId;
 			if (config.autoOpenFromGe())
 			{
-				openInPanel(itemId, config.geSwitchPanel());
+				boolean switchTo = config.geSwitchPanel();
+				openInPanel(itemId, switchTo, switchTo && !config.geOpenAsked());
 			}
 		}
 	}
@@ -831,7 +832,7 @@ public class HardcoreWorldToolKitPlugin extends Plugin
 			.setOption(MENU_OPTION)
 			.setTarget(e.getTarget())
 			.setType(MenuAction.RUNELITE)
-			.onClick(me -> openInPanel(itemId, true));
+			.onClick(me -> openInPanel(itemId, true, false));
 	}
 
 	/**
@@ -840,8 +841,9 @@ public class HardcoreWorldToolKitPlugin extends Plugin
 	 * @param switchTo switch the sidebar to this panel. When false the panel still follows (a hidden one loads the item
 	 *                 when it is next shown), but whatever panel is open stays on top, e.g. another price plugin's
 	 *                 following the same GE offer
+	 * @param askGe    ask whether GE offers should keep opening the sidebar
 	 */
-	private void openInPanel(int itemId, boolean switchTo)
+	private void openInPanel(int itemId, boolean switchTo, boolean askGe)
 	{
 		int id = itemManager.canonicalize(itemId);
 		String name = itemManager.getItemComposition(id).getName();
@@ -853,7 +855,7 @@ public class HardcoreWorldToolKitPlugin extends Plugin
 			{
 				return;
 			}
-			p.openItem(id, name);
+			p.openItem(id, name, askGe);
 			if (switchTo)
 			{
 				clientToolbar.openPanel(nav);

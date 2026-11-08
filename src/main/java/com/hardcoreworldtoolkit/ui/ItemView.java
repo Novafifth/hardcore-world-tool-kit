@@ -52,7 +52,9 @@ import javax.swing.JPanel;
 import javax.swing.JViewport;
 import javax.swing.SwingUtilities;
 import javax.swing.Timer;
+import javax.swing.border.CompoundBorder;
 import javax.swing.border.EmptyBorder;
+import javax.swing.border.MatteBorder;
 import javax.swing.text.JTextComponent;
 import net.runelite.client.game.ItemManager;
 import net.runelite.client.ui.ColorScheme;
@@ -89,6 +91,10 @@ class ItemView
 	private final Runnable onBack;
 
 	private final JPanel panel = column();
+	private final JPanel geAsk = column();
+	private Runnable geNo = () -> { };
+	private Runnable geYes = () -> { };
+	private final Timer geAskHide = new Timer(6000, e -> geAsk.setVisible(false));
 	private final JLabel updatedLabel = mutedLabel("");
 	private final JLabel iconLabel = new JLabel();
 	private final JLabel nameLabel = new JLabel();
@@ -170,9 +176,13 @@ class ItemView
 		});
 		uploadRefresh.setRepeats(false);
 
+		geAsk.setVisible(false);
+		panel.add(geAsk);
 		panel.add(buildHeader());
 		panel.add(Box.createVerticalStrut(8));
 		panel.add(buildHead());
+		panel.add(Box.createVerticalStrut(6));
+		panel.add(buildDetailButton());
 		failedLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
 		failedLabel.setVisible(false);
 		panel.add(failedLabel);
@@ -272,19 +282,95 @@ class ItemView
 			}
 		});
 		right.add(refresh);
-		JButton market = iconButton(Icons.stats(), "Open this item on the Market Dashboard", 22);
-		market.addActionListener(e ->
+		top.add(right, BorderLayout.EAST);
+		top.setMaximumSize(new Dimension(Integer.MAX_VALUE, 28));
+		top.setAlignmentX(Component.LEFT_ALIGNMENT);
+		return top;
+	}
+
+	private JComponent buildDetailButton()
+	{
+		JButton b = PanelComponents.primaryButton("See detailed info");
+		b.setIcon(Icons.stats());
+		b.setToolTipText("Open this item on the Market Dashboard");
+		b.addActionListener(e ->
 		{
 			if (hasItem())
 			{
 				LinkBrowser.browse(marketUrl(currentItem));
 			}
 		});
-		right.add(market);
-		top.add(right, BorderLayout.EAST);
-		top.setMaximumSize(new Dimension(Integer.MAX_VALUE, 28));
-		top.setAlignmentX(Component.LEFT_ALIGNMENT);
-		return top;
+		b.setAlignmentX(Component.LEFT_ALIGNMENT);
+		b.setMaximumSize(new Dimension(Integer.MAX_VALUE, 28));
+		b.setPreferredSize(new Dimension(0, 28));
+		return b;
+	}
+
+	void setGeAskActions(Runnable onNo, Runnable onYes)
+	{
+		geNo = onNo;
+		geYes = onYes;
+	}
+
+	/** Asks whether GE offers should keep opening the sidebar. */
+	void showGeAsk()
+	{
+		geAskHide.stop();
+		geAsk.removeAll();
+		JPanel card = column();
+		card.setOpaque(true);
+		card.setBackground(ColorScheme.DARKER_GRAY_COLOR);
+		card.setBorder(new CompoundBorder(new MatteBorder(0, 3, 0, 0, PanelComponents.HC_RED), new EmptyBorder(8, 8, 8, 8)));
+		JLabel title = new JLabel("Keep auto-opening?");
+		title.setFont(FontManager.getRunescapeBoldFont());
+		title.setForeground(Color.WHITE);
+		title.setAlignmentX(Component.LEFT_ALIGNMENT);
+		card.add(title);
+		card.add(Box.createVerticalStrut(4));
+		card.add(wrapText("The sidebar opened because you set up a GE offer. Should it keep doing that?", ColorScheme.LIGHT_GRAY_COLOR));
+		card.add(Box.createVerticalStrut(6));
+		JPanel buttons = new JPanel(new GridLayout(1, 2, 4, 0));
+		buttons.setOpaque(false);
+		JButton no = new JButton("No, stop");
+		no.setFocusPainted(false);
+		no.addActionListener(e -> geNo.run());
+		JButton yes = new JButton("Yes, keep");
+		yes.setFocusPainted(false);
+		yes.addActionListener(e -> geYes.run());
+		buttons.add(no);
+		buttons.add(yes);
+		buttons.setAlignmentX(Component.LEFT_ALIGNMENT);
+		buttons.setMaximumSize(new Dimension(Integer.MAX_VALUE, 26));
+		card.add(buttons);
+		card.add(Box.createVerticalStrut(4));
+		card.add(smallLabel("Change it any time in the settings.", ColorScheme.LIGHT_GRAY_COLOR));
+		geAsk.add(card);
+		geAsk.add(Box.createVerticalStrut(8));
+		geAsk.setVisible(true);
+		geAsk.revalidate();
+		geAsk.repaint();
+	}
+
+	/** Hides the card, after showing {@code message} for a few seconds if given. */
+	void hideGeAsk(String message)
+	{
+		if (message == null)
+		{
+			geAsk.setVisible(false);
+			return;
+		}
+		geAsk.removeAll();
+		JPanel card = column();
+		card.setOpaque(true);
+		card.setBackground(ColorScheme.DARKER_GRAY_COLOR);
+		card.setBorder(new CompoundBorder(new MatteBorder(0, 3, 0, 0, PanelComponents.GOOD), new EmptyBorder(8, 8, 8, 8)));
+		card.add(wrapText(message, Color.WHITE));
+		geAsk.add(card);
+		geAsk.add(Box.createVerticalStrut(8));
+		geAsk.revalidate();
+		geAsk.repaint();
+		geAskHide.setRepeats(false);
+		geAskHide.restart();
 	}
 
 	private JComponent buildHead()

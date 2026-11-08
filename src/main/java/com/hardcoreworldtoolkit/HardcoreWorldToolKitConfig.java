@@ -29,6 +29,8 @@ public interface HardcoreWorldToolKitConfig extends Config
 	String KEY_OFFER_NOTIFICATION = "offerNotification";
 	/** Not a setting: set once the one-time chat hint has been considered for this install. */
 	String KEY_HINT_SHOWN = "chatHintShown";
+	/** Not a setting: set once the player answered "open the sidebar for GE offers?" (the card a GE offer shows). */
+	String KEY_GE_OPEN_ASKED = "geOpenAsked";
 
 	String THIRD_PARTY_WARNING = "This feature submits your IP address to a 3rd-party server not controlled or verified by RuneLite developers";
 
@@ -116,8 +118,9 @@ public interface HardcoreWorldToolKitConfig extends Config
 
 	@ConfigItem(
 		keyName = KEY_GE_SWITCH,
-		name = "Switch to this panel for GE offers",
-		description = "Off: the item still opens here, but the sidebar stays on the panel you have open",
+		name = "Open the sidebar for GE offers",
+		description = "Open the sidebar on this panel when you set up a GE offer. Off: the sidebar stays as it is, and the item is"
+			+ " ready here when you open the panel yourself",
 		position = 1,
 		section = SECTION_PANEL
 	)
@@ -192,5 +195,12 @@ public interface HardcoreWorldToolKitConfig extends Config
 	default int statsNoticeSeen()
 	{
 		return 0;
+	}
+
+	/** True once the player answered the card asking whether GE offers should open the sidebar. */
+	@ConfigItem(keyName = KEY_GE_OPEN_ASKED, name = "", description = "", hidden = true)
+	default boolean geOpenAsked()
+	{
+		return false;
 	}
 }
