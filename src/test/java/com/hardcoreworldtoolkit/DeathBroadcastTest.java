@@ -11,7 +11,10 @@ public class DeathBroadcastTest
 	{
 		assertEquals(1306, DeathBroadcast.parse("Made Up2(1306) was killed by a 12 damage hit from a Hill Giant.").level());
 		assertEquals(70, DeathBroadcast.parse("Pk tester(120) killed Seed Player0(70) with a 25 damage hit in the Wilderness.").level());
-		assertEquals(42, DeathBroadcast.parse("<col=ef1020>Low Lvl</col>(42) was killed by a 3 damage hit from a Goblin.").level());
+		assertEquals(1000, DeathBroadcast.parse("Damis killed HCW4(1K) with a 24 damage hit in Kandarin.").level());
+		assertEquals(1200, DeathBroadcast.parse("Big One(1.2K) was killed by a 30 damage hit from a Hill Giant.").level());
+		assertEquals("HCW4", DeathBroadcast.parse("Damis killed HCW4(1K) with a 24 damage hit in Kandarin.").getVictim());
+		assertEquals(42,DeathBroadcast.parse("<col=ef1020>Low Lvl</col>(42) was killed by a 3 damage hit from a Goblin.").level());
 	}
 
 	@Test

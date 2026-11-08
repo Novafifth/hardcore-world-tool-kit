@@ -9,8 +9,10 @@ import net.runelite.client.util.Text;
 @Value
 class DeathBroadcast
 {
-	private static final Pattern KILLED = Pattern.compile(".+? killed (.+?)\\(\\d+\\) with an? \\d+ damage hit.*", Pattern.CASE_INSENSITIVE);
-	private static final Pattern DIED = Pattern.compile("(.+?)\\(\\d+\\) was killed by an? \\d+ damage hit.*", Pattern.CASE_INSENSITIVE);
+	/** The total level: 1000 and up shows as "1K" (or "1.2K"). */
+	private static final String LEVEL = "\\((\\d+(?:\\.\\d+)?k?)\\)";
+	private static final Pattern KILLED = Pattern.compile(".+? killed (.+?)" + LEVEL + " with an? \\d+ damage hit.*", Pattern.CASE_INSENSITIVE);
+	private static final Pattern DIED = Pattern.compile("(.+?)" + LEVEL + " was killed by an? \\d+ damage hit.*", Pattern.CASE_INSENSITIVE);
 
 	String text;
 	String victim;
@@ -29,7 +31,12 @@ class DeathBroadcast
 
 	int level()
 	{
-		Matcher m = Pattern.compile(Pattern.quote(victim) + "\\((\\d{1,4})\\)").matcher(text);
-		return m.find() ? Integer.parseInt(m.group(1)) : -1;
+		Matcher m = Pattern.compile(Pattern.quote(victim) + LEVEL, Pattern.CASE_INSENSITIVE).matcher(text);
+		if (!m.find())
+		{
+			return -1;
+		}
+		String v = m.group(1).toLowerCase();
+		return v.endsWith("k") ? (int) (Double.parseDouble(v.substring(0, v.length() - 1)) * 1000) : Integer.parseInt(v);
 	}
 }
