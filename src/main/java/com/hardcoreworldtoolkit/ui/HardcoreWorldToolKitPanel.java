@@ -78,8 +78,8 @@ public class HardcoreWorldToolKitPanel extends PluginPanel
 	private static final int HEADER_HEIGHT = 30;
 	/** "from=plugin" lets the site count how often it is opened from here (a total, nothing about the player). */
 	/** The plugin's privacy notice, on the Hardcore World Tool Kit site. */
-	static final String PRIVACY_URL = "https://hardcore.malkana.dev/privacy";
-	static final String STATS_URL = "https://hardcore.malkana.dev/?from=plugin&utm_source=plugin&utm_medium=stats_button";
+	static final String PRIVACY_URL = "https://hcwtoolkit.com/privacy";
+	static final String STATS_URL = "https://hcwtoolkit.com/?from=plugin&utm_source=plugin&utm_medium=stats_button";
 	static final String STATS_TOOLTIP = "Opens the Hardcore Worlds statistics page (Market Watch) in your browser";
 	static final String GEAR_TOOLTIP = "Settings: RuneLite Configuration > Hardcore World Tool Kit";
 	static final String DELETE_ITEM = "Delete my shared data...";

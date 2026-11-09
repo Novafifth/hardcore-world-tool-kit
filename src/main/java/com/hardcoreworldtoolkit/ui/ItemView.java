@@ -255,7 +255,7 @@ class ItemView
 	/** The item's page on the Market Dashboard (the website). */
 	static String marketUrl(int itemId)
 	{
-		return "https://hardcore.malkana.dev/tools?from=plugin&utm_source=plugin&utm_medium=item_button#item=" + itemId;
+		return "https://hcwtoolkit.com/tools?from=plugin&utm_source=plugin&utm_medium=item_button#item=" + itemId;
 	}
 
 	private JComponent buildHeader()

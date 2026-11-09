@@ -8,7 +8,7 @@ public class ItemViewUrlTest
 	@Test
 	public void marketUrlOpensTheItemPage()
 	{
-		assertEquals("https://hardcore.malkana.dev/tools?from=plugin&utm_source=plugin&utm_medium=item_button#item=1993",
+		assertEquals("https://hcwtoolkit.com/tools?from=plugin&utm_source=plugin&utm_medium=item_button#item=1993",
 			ItemView.marketUrl(1993));
 	}
 }
