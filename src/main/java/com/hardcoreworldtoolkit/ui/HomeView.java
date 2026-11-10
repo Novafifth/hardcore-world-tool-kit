@@ -39,9 +39,8 @@ import net.runelite.client.util.QuantityFormatter;
  */
 class HomeView
 {
-	static final String NOT_CONNECTED = "Live prices, the swap rate and price charts show here once you connect (the card above, or the gear icon).";
-
 	private final JPanel panel = column();
+	private final JPanel tabs = new JPanel(new GridLayout(1, 2, 0, 0));
 	private final JLabel statsLabel = mutedLabel("");
 	/** The bond rate row, above the tabs; hidden until the server has a rate. */
 	private final JPanel bond = new JPanel(new BorderLayout());
@@ -84,7 +83,6 @@ class HomeView
 				k.value.getQty(), k.value.getPrice(), k.value.getTs(), onOpen));
 		mineList.setEmptyText("No trades recorded yet. Trade on a Hardcore World or open your GE History.");
 
-		JPanel tabs = new JPanel(new GridLayout(1, 2, 0, 0));
 		tabs.setOpaque(false);
 		JButton marketTab = tabButton("Market");
 		JButton mine = tabButton("My trades");
@@ -230,11 +228,18 @@ class HomeView
 
 	void showNotConnected()
 	{
-		setStats("Not connected");
-		showMessage(NOT_CONNECTED);
+		tabs.setVisible(false);
+		bond.setVisible(false);
+		setStats("");
+		message.setVisible(false);
 		marketList.getComponent().setVisible(false);
 		mineList.getComponent().setVisible(false);
 		tick();
+	}
+
+	void showTabs()
+	{
+		tabs.setVisible(true);
 	}
 
 	/** Show the merged Market feed ({@link FeedMerge}): each item's latest trade ({@link MarketRows}), newest first. */

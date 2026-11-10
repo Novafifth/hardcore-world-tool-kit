@@ -197,18 +197,7 @@ public class HardcoreWorldToolKitPanel extends PluginPanel
 		this.checkOffers = checkOffers;
 		this.sharedData = sharedData;
 
-		welcomeCard = new WelcomeCard(
-			() ->
-			{
-				if (previewFresh)
-				{
-					// In the fresh-install preview, Connect only ends the preview.
-					setFreshPreview(false);
-					return;
-				}
-				configManager.setConfiguration(HardcoreWorldToolKitConfig.GROUP, HardcoreWorldToolKitConfig.KEY_CONNECTED, true);
-			},
-			this::openPrivacy, this::dismissImportNotice);
+		welcomeCard = new WelcomeCard(this::connect, this::openPrivacy, this::dismissImportNotice);
 		offersSection = new OffersSection(checkOffers, this::openItem);
 		profitSection = new ProfitSection(rebuildProfit, this::openItem);
 		homeView = new HomeView(itemManager, welcomeCard.getComponent(), offersSection.getComponent(),
@@ -221,6 +210,7 @@ public class HardcoreWorldToolKitPanel extends PluginPanel
 			refresh();
 		});
 		itemView.setGeAskActions(() -> answerGeAsk(false), () -> answerGeAsk(true));
+		itemView.setConnectAction(this::connect);
 		feedConnected = config.connected();
 
 		setLayout(new BorderLayout(0, 8));
@@ -271,6 +261,16 @@ public class HardcoreWorldToolKitPanel extends PluginPanel
 		});
 		ticker = new Timer(TICK_MS, e -> tick());
 		onConfigChanged();
+	}
+
+	private void connect()
+	{
+		if (previewFresh)
+		{
+			setFreshPreview(false);
+			return;
+		}
+		configManager.setConfiguration(HardcoreWorldToolKitConfig.GROUP, HardcoreWorldToolKitConfig.KEY_CONNECTED, true);
 	}
 
 	private void answerGeAsk(boolean keep)
@@ -553,6 +553,7 @@ public class HardcoreWorldToolKitPanel extends PluginPanel
 		feedFullNext = true;
 		feedPollsSinceFull = 0;
 		feedGeneration++;
+		bondAt = 0;
 		homeView.resetMarket();
 	}
 
@@ -608,14 +609,15 @@ public class HardcoreWorldToolKitPanel extends PluginPanel
 			itemView.load(itemView.getCurrentItem(), fresh);
 			return;
 		}
-		if (homeView.isShowingMine())
-		{
-			homeView.showMine(shownMyTrades());
-			return;
-		}
 		if (!effectiveConnected())
 		{
 			homeView.showNotConnected();
+			return;
+		}
+		homeView.showTabs();
+		if (homeView.isShowingMine())
+		{
+			homeView.showMine(shownMyTrades());
 			return;
 		}
 		loadBond();
@@ -704,7 +706,7 @@ public class HardcoreWorldToolKitPanel extends PluginPanel
 		{
 			return;
 		}
-		if (CARD_HOME.equals(currentCard) && homeView.isShowingMine())
+		if (CARD_HOME.equals(currentCard) && homeView.isShowingMine() && effectiveConnected())
 		{
 			homeView.showMine(shownMyTrades());
 		}

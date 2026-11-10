@@ -79,7 +79,7 @@ class ItemView
 	private int seriesItem = -1;
 	private ChartRange seriesRange;
 	private long seriesAt;
-	static final String NOT_CONNECTED = "Connect (on the home screen or in the settings) to see market data from all players.";
+	static final String NOT_CONNECTED = "Connect to see market data.";
 
 	private final HardcoreWorldToolKitConfig config;
 	private final ItemManager itemManager;
@@ -92,6 +92,8 @@ class ItemView
 
 	private final JPanel panel = column();
 	private final JPanel geAsk = column();
+	private final JButton detailButton = PanelComponents.primaryButton("");
+	private Runnable onConnect = () -> { };
 	private Runnable geNo = () -> { };
 	private Runnable geYes = () -> { };
 	private final Timer geAskHide = new Timer(6000, e -> geAsk.setVisible(false));
@@ -290,12 +292,17 @@ class ItemView
 
 	private JComponent buildDetailButton()
 	{
-		JButton b = PanelComponents.primaryButton("See detailed info");
-		b.setIcon(Icons.stats());
-		b.setToolTipText("Open this item on the Market Dashboard");
+		JButton b = detailButton;
 		b.addActionListener(e ->
 		{
-			if (hasItem())
+			if (!config.connected())
+			{
+				if (WelcomeCard.WARNING_DIALOG.confirm(b))
+				{
+					onConnect.run();
+				}
+			}
+			else if (hasItem())
 			{
 				LinkBrowser.browse(marketUrl(currentItem));
 			}
@@ -304,6 +311,11 @@ class ItemView
 		b.setMaximumSize(new Dimension(Integer.MAX_VALUE, 28));
 		b.setPreferredSize(new Dimension(0, 28));
 		return b;
+	}
+
+	void setConnectAction(Runnable action)
+	{
+		onConnect = action;
 	}
 
 	void setGeAskActions(Runnable onNo, Runnable onYes)
@@ -494,7 +506,11 @@ class ItemView
 	void load(int itemId, boolean fresh)
 	{
 		updateLocal();
-		if (!config.connected())
+		boolean connected = config.connected();
+		detailButton.setText(connected ? "See detailed info" : "Connect");
+		detailButton.setIcon(connected ? Icons.stats() : null);
+		detailButton.setToolTipText(connected ? "Open this item on the Market Dashboard" : null);
+		if (!connected)
 		{
 			keepScroll(() ->
 			{
@@ -727,7 +743,7 @@ class ItemView
 			offerSection.setVisible(!offers.isEmpty());
 			List<TradeEvent> mine = ItemSections.tradesFor(myTrades.get(), currentItem);
 			mineRows.setItems(RowList.withOccurrenceKeys(mine, ItemSections::tradeKey));
-			mineSection.setVisible(!mine.isEmpty());
+			mineSection.setVisible(config.connected() && !mine.isEmpty());
 			renderProfit(profit.get().item(currentItem));
 		});
 	}
@@ -735,7 +751,7 @@ class ItemView
 	/** "Your profit": units held, average cost and realized profit, plus sells with no known cost. */
 	private void renderProfit(ProfitSnapshot.ItemProfit p)
 	{
-		boolean show = ProfitText.hasPosition(p);
+		boolean show = config.showProfit() && ProfitText.hasPosition(p);
 		if (show)
 		{
 			String line = ProfitText.itemLine(p);

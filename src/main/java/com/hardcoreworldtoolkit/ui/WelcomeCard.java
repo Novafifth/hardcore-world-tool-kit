@@ -33,12 +33,12 @@ import net.runelite.client.ui.FontManager;
 class WelcomeCard
 {
 	static final String[] BENEFITS = {
-		"Real Hardcore GE prices from other players' trades",
-		"Today's bond swap rate (Hardcore gp to OSRS gp)",
-		"Price charts and the best bid and ask for every item",
+		"Live prices and charts",
+		"Today's bond swap rate",
+		"Best bid and ask for every item",
 	};
-	static final String SHARED_TEXT = "Shared: item, price, quantity, time, a hashed account ID and a random install ID."
-		+ " Never your name. IP addresses are never stored.";
+	static final String SHARED_TEXT = "Shared: your trades and a hashed ID. Never your name. IP addresses are never stored.";
+	private static final Color FINE_PRINT = new Color(0x8a8a8a);
 
 	/** Asks before connecting; returns true to go ahead. Tests replace the dialog. */
 	interface ConnectConfirm
@@ -139,11 +139,11 @@ class WelcomeCard
 
 	private void addConnectBlock()
 	{
-		card.add(wrapText("Join 3,000+ players already using it.", PanelComponents.GOOD));
+		card.add(wrapText("Join 5,000+ players already using it.", ColorScheme.LIGHT_GRAY_COLOR));
 		card.add(Box.createVerticalStrut(4));
 		for (String b : BENEFITS)
 		{
-			card.add(wrapText("• " + b, ColorScheme.TEXT_COLOR));
+			card.add(wrapText("• " + b, ColorScheme.LIGHT_GRAY_COLOR));
 		}
 		card.add(Box.createVerticalStrut(10));
 		JButton connect = primaryButton("Connect");
@@ -159,7 +159,7 @@ class WelcomeCard
 		});
 		card.add(connect);
 		card.add(Box.createVerticalStrut(8));
-		card.add(wrapText(SHARED_TEXT, ColorScheme.LIGHT_GRAY_COLOR));
+		card.add(wrapText(SHARED_TEXT, FINE_PRINT));
 		card.add(linkLabel("Privacy", onPrivacy));
 	}
 
