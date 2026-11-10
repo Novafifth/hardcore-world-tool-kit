@@ -1,10 +1,13 @@
 package com.hardcoreworldtoolkit.ui;
 
+import static com.hardcoreworldtoolkit.ui.Format.compact;
 import static com.hardcoreworldtoolkit.ui.Format.describe;
 import static com.hardcoreworldtoolkit.ui.Format.when;
 import static com.hardcoreworldtoolkit.ui.PanelComponents.column;
 import static com.hardcoreworldtoolkit.ui.PanelComponents.iconButton;
 import static com.hardcoreworldtoolkit.ui.PanelComponents.mutedLabel;
+import static com.hardcoreworldtoolkit.ui.PanelComponents.segButton;
+import static com.hardcoreworldtoolkit.ui.PanelComponents.styleSeg;
 import static com.hardcoreworldtoolkit.ui.PanelComponents.styleTab;
 import static com.hardcoreworldtoolkit.ui.PanelComponents.tabButton;
 import static com.hardcoreworldtoolkit.ui.PanelComponents.tradeRow;
@@ -16,6 +19,7 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
+import java.awt.FlowLayout;
 import java.awt.GridLayout;
 import java.util.ArrayList;
 import java.util.List;
@@ -26,6 +30,7 @@ import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.border.EmptyBorder;
+import javax.swing.border.LineBorder;
 import javax.swing.text.JTextComponent;
 import net.runelite.api.gameval.ItemID;
 import net.runelite.client.game.ItemManager;
@@ -40,7 +45,7 @@ import net.runelite.client.util.QuantityFormatter;
 class HomeView
 {
 	private final JPanel panel = column();
-	private final JPanel tabs = new JPanel(new GridLayout(1, 2, 0, 0));
+	private final JPanel tabs = new JPanel(new GridLayout(1, 3, 0, 0));
 	private final JLabel statsLabel = mutedLabel("");
 	/** The bond rate row, above the tabs; hidden until the server has a rate. */
 	private final JPanel bond = new JPanel(new BorderLayout());
@@ -52,7 +57,13 @@ class HomeView
 	private final JTextComponent message = (JTextComponent) wrapText("", ColorScheme.LIGHT_GRAY_COLOR);
 	private final RowList<MarketRows.Row> marketList;
 	private final RowList<RowList.Keyed<TradeEvent>> mineList;
+	private final RowList<MarketData.Flip> flipsList;
+	private final RowList<MarketData.Gap> gapsList;
+	private final JPanel subTabs = new JPanel(new FlowLayout(FlowLayout.CENTER, 0, 0));
 
+	/** 0 Market, 1 Flips, 2 Gaps. */
+	private int tab;
+	/** Under Market: My trades instead of Live. */
 	private boolean showMine;
 	/** Epoch ms of the last successful market load, or 0. */
 	private long lastUpdated;
@@ -82,20 +93,48 @@ class HomeView
 			k -> row(itemManager, k.value.getItemId(), k.value.getName(), k.value.getKind(), k.value.getSide(),
 				k.value.getQty(), k.value.getPrice(), k.value.getTs(), onOpen));
 		mineList.setEmptyText("No trades recorded yet. Trade on a Hardcore World or open your GE History.");
+		flipsList = new RowList<>(f -> f.getId(), f -> f.getBuy() + ":" + f.getSell() + ":" + f.getQty() + ":" + f.getProfitHigh(),
+			f -> tradeRow(itemManager, f.getId(), f.getName(), compact(f.getBuy()) + " \u2192 " + compact(f.getSell()) + " \u00b7 " + compact(f.getQty()),
+				"+" + compact(f.getProfitLow()) + "\u2013" + compact(f.getProfitHigh()), true, onOpen));
+		flipsList.setEmptyText("No flips for this much gold right now.");
+		gapsList = new RowList<>(g -> g.getId(), g -> g.getWanted() + ":" + g.getBid() + ":" + g.getOffered() + ":" + g.getRevenue(),
+			g -> tradeRow(itemManager, g.getId(), g.getName(), compact(g.getWanted()) + " @ " + compact(g.getBid()) + " \u00b7 " + compact(g.getOffered()) + " sell",
+				compact(g.getRevenue()) + "/h", true, onOpen));
+		gapsList.setEmptyText("No gaps right now.");
 
 		tabs.setOpaque(false);
 		JButton marketTab = tabButton("Market");
-		JButton mine = tabButton("My trades");
+		JButton flips = tabButton("Flips");
+		JButton gaps = tabButton("Gaps");
+		JButton live = segButton("Live");
+		JButton mine = segButton("My trades");
 		Runnable style = () ->
 		{
-			styleTab(marketTab, !showMine);
-			styleTab(mine, showMine);
+			styleTab(marketTab, tab == 0);
+			styleTab(flips, tab == 1);
+			styleTab(gaps, tab == 2);
+			styleSeg(live, !showMine);
+			styleSeg(mine, showMine);
+			subTabs.setVisible(tab == 0 && tabs.isVisible());
 		};
-		marketTab.addActionListener(e -> selectTab(false, style, onTab));
-		mine.addActionListener(e -> selectTab(true, style, onTab));
+		marketTab.addActionListener(e -> selectTab(0, showMine, style, onTab));
+		flips.addActionListener(e -> selectTab(1, showMine, style, onTab));
+		gaps.addActionListener(e -> selectTab(2, showMine, style, onTab));
+		live.addActionListener(e -> selectTab(0, false, style, onTab));
+		mine.addActionListener(e -> selectTab(0, true, style, onTab));
 		style.run();
 		tabs.add(marketTab);
-		tabs.add(mine);
+		tabs.add(flips);
+		tabs.add(gaps);
+		JPanel toggle = new JPanel(new GridLayout(1, 2, 0, 0));
+		toggle.setBorder(new LineBorder(ColorScheme.MEDIUM_GRAY_COLOR));
+		toggle.add(live);
+		toggle.add(mine);
+		subTabs.setOpaque(false);
+		subTabs.setBorder(new EmptyBorder(10, 0, 8, 0));
+		subTabs.add(toggle);
+		subTabs.setMaximumSize(new Dimension(Integer.MAX_VALUE, 52));
+		subTabs.setAlignmentX(Component.LEFT_ALIGNMENT);
 		tabs.setMaximumSize(new Dimension(Integer.MAX_VALUE, 28));
 		tabs.setAlignmentX(Component.LEFT_ALIGNMENT);
 
@@ -118,6 +157,7 @@ class HomeView
 		bond.setAlignmentX(Component.LEFT_ALIGNMENT);
 		panel.add(bond);
 		panel.add(tabs);
+		panel.add(subTabs);
 		panel.add(Box.createVerticalStrut(4));
 		panel.add(updatedRow);
 		panel.add(Box.createVerticalStrut(2));
@@ -128,6 +168,10 @@ class HomeView
 		panel.add(marketList.getComponent());
 		panel.add(mineList.getComponent());
 		mineList.getComponent().setVisible(false);
+		panel.add(flipsList.getComponent());
+		flipsList.getComponent().setVisible(false);
+		panel.add(gapsList.getComponent());
+		gapsList.getComponent().setVisible(false);
 		// The Market tab is selected first: say it's loading rather than show an empty list.
 		showLoading();
 	}
@@ -153,16 +197,22 @@ class HomeView
 		return tradeRow(itemManager, itemId, name, line2, Format.when(kind, ts), onOpen);
 	}
 
-	private void selectTab(boolean mine, Runnable style, Runnable onTab)
+	private void selectTab(int newTab, boolean mine, Runnable style, Runnable onTab)
 	{
-		if (mine != showMine)
+		if (newTab != tab || mine != showMine)
 		{
+			tab = newTab;
 			showMine = mine;
 			// A different tab starts at its first page and doesn't flash rows as new.
-			(mine ? mineList : marketList).reset();
-			if (!mine)
+			(tab == 1 ? flipsList : tab == 2 ? gapsList : mine ? mineList : marketList).reset();
+			showOnly(null);
+			if (tab != 0)
 			{
-				mineList.getComponent().setVisible(false);
+				setStats("");
+				showMessage("Loading\u2026");
+			}
+			else if (!mine)
+			{
 				if (hasMarketData)
 				{
 					// Show the feed we have right away; the load that follows only adds what's new.
@@ -213,15 +263,14 @@ class HomeView
 	/** True when the "My trades" tab is selected. */
 	boolean isShowingMine()
 	{
-		return showMine;
+		return tab == 0 && showMine;
 	}
 
 	void showMine(List<TradeEvent> trades)
 	{
 		setStats("Your Hardcore World trades");
 		message.setVisible(false);
-		marketList.getComponent().setVisible(false);
-		mineList.getComponent().setVisible(true);
+		showOnly(mineList);
 		mineList.setItems(RowList.withOccurrenceKeys(trades, ItemSections::tradeKey));
 		tick();
 	}
@@ -229,17 +278,70 @@ class HomeView
 	void showNotConnected()
 	{
 		tabs.setVisible(false);
+		subTabs.setVisible(false);
 		bond.setVisible(false);
 		setStats("");
 		message.setVisible(false);
-		marketList.getComponent().setVisible(false);
-		mineList.getComponent().setVisible(false);
+		showOnly(null);
 		tick();
 	}
 
 	void showTabs()
 	{
 		tabs.setVisible(true);
+		subTabs.setVisible(tab == 0);
+	}
+
+	boolean isShowingLive()
+	{
+		return tab == 0 && !showMine;
+	}
+
+	boolean isShowingFlips()
+	{
+		return tab == 1;
+	}
+
+	boolean isShowingGaps()
+	{
+		return tab == 2;
+	}
+
+	void showFlips(List<MarketData.Flip> flips, long capital)
+	{
+		setStats(flips.size() + " flips \u00b7 " + compact(capital) + " gold \u00b7 profit over 4h");
+		message.setVisible(false);
+		showOnly(flipsList);
+		flipsList.setItems(flips);
+		tick();
+	}
+
+	void showGaps(List<MarketData.Gap> gaps)
+	{
+		setStats(gaps.size() + " gaps \u00b7 gp an hour for the supplier");
+		message.setVisible(false);
+		showOnly(gapsList);
+		gapsList.setItems(gaps);
+		tick();
+	}
+
+	/** A failed Flips or Gaps load: said only while nothing has loaded. */
+	void showTabError(String text)
+	{
+		if ((tab == 1 ? flipsList : gapsList).getComponent().isVisible())
+		{
+			return;
+		}
+		setStats("");
+		showMessage(text);
+	}
+
+	private void showOnly(RowList<?> list)
+	{
+		marketList.getComponent().setVisible(list == marketList);
+		mineList.getComponent().setVisible(list == mineList);
+		flipsList.getComponent().setVisible(list == flipsList);
+		gapsList.getComponent().setVisible(list == gapsList);
 	}
 
 	/** Show the merged Market feed ({@link FeedMerge}): each item's latest trade ({@link MarketRows}), newest first. */
@@ -250,8 +352,7 @@ class HomeView
 			+ " gp traded in 24h</html>";
 		setStats(marketStats);
 		message.setVisible(false);
-		mineList.getComponent().setVisible(false);
-		marketList.getComponent().setVisible(true);
+		showOnly(marketList);
 		marketList.setItems(MarketRows.latestPerItem(events));
 		hasMarketData = true;
 		failed = null;
@@ -286,7 +387,7 @@ class HomeView
 		marketStats = "";
 		lastUpdated = 0;
 		failed = null;
-		if (!showMine)
+		if (tab == 0 && !showMine)
 		{
 			showLoading();
 		}
@@ -307,7 +408,7 @@ class HomeView
 	{
 		String text;
 		Color color = ColorScheme.LIGHT_GRAY_COLOR;
-		if (showMine || !hasMarketData)
+		if (tab != 0 || showMine || !hasMarketData)
 		{
 			text = "";
 		}
@@ -321,7 +422,7 @@ class HomeView
 		{
 			text = "Updated " + Format.updatedAgo(lastUpdated, System.currentTimeMillis());
 		}
-		boolean rowShown = !showMine && hasMarketData;
+		boolean rowShown = tab == 0 && !showMine && hasMarketData;
 		if (updatedRow.isVisible() != rowShown)
 		{
 			updatedRow.setVisible(rowShown);
@@ -344,6 +445,8 @@ class HomeView
 	{
 		marketList.stop();
 		mineList.stop();
+		flipsList.stop();
+		gapsList.stop();
 	}
 
 	private void setStats(String text)

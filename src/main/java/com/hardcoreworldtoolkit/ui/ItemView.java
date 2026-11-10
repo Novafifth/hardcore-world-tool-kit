@@ -878,8 +878,7 @@ class ItemView
 	}
 
 	/**
-	 * Rows for "Recent trades": fills and GE History rows, plus cancellations, which read "Cancelled buy, N left".
-	 * Offer placements are never listed; they aren't trades.
+	 * Rows for "Recent trades": fills and GE History rows. Offer placements and cancellations aren't trades.
 	 */
 	static List<MarketData.Trade> recentTrades(List<MarketData.Trade> trades)
 	{
@@ -890,7 +889,7 @@ class ItemView
 		List<MarketData.Trade> shown = new ArrayList<>();
 		for (MarketData.Trade t : trades)
 		{
-			if (TradeEvent.isTrade(t.getKind()) || TradeEvent.CANCELLED.equals(t.getKind()))
+			if (TradeEvent.isTrade(t.getKind()))
 			{
 				shown.add(t);
 			}

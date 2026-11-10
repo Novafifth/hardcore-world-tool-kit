@@ -620,6 +620,16 @@ public class HardcoreWorldToolKitPanel extends PluginPanel
 			homeView.showMine(shownMyTrades());
 			return;
 		}
+		if (homeView.isShowingFlips())
+		{
+			market.flips(config.flipsGold() * 1000L, r -> homeView.showFlips(r.getFlips(), r.getCapital()), homeView::showTabError);
+			return;
+		}
+		if (homeView.isShowingGaps())
+		{
+			market.gaps(r -> homeView.showGaps(r.getGaps()), homeView::showTabError);
+			return;
+		}
 		loadBond();
 		loadFeed(feedFullNext || lastFeedId <= 0 || feedPollsSinceFull >= FULL_FEED_EVERY);
 	}
@@ -680,7 +690,7 @@ public class HardcoreWorldToolKitPanel extends PluginPanel
 			{
 				feedStats = r.getStats();
 			}
-			if (!homeView.isShowingMine() && CARD_HOME.equals(currentCard))
+			if (homeView.isShowingLive() && CARD_HOME.equals(currentCard))
 			{
 				homeView.showMarket(feedStats, feedEvents);
 			}
@@ -692,7 +702,7 @@ public class HardcoreWorldToolKitPanel extends PluginPanel
 			}
 			// Whatever went wrong (server down, restarted, replaced), start over from the newest page next time.
 			feedFullNext = true;
-			if (!homeView.isShowingMine() && CARD_HOME.equals(currentCard))
+			if (homeView.isShowingLive() && CARD_HOME.equals(currentCard))
 			{
 				homeView.showError(err);
 			}

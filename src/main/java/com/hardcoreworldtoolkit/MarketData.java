@@ -206,6 +206,46 @@ public final class MarketData
 		private Long confSellVolume;
 	}
 
+	@Getter
+	@EqualsAndHashCode
+	public static class Flips
+	{
+		private long capital;
+		private List<Flip> flips = Collections.emptyList();
+	}
+
+	@Getter
+	@EqualsAndHashCode
+	public static class Gaps
+	{
+		private List<Gap> gaps = Collections.emptyList();
+	}
+
+	@Getter
+	@EqualsAndHashCode
+	public static class Gap
+	{
+		private int id;
+		private String name;
+		private long wanted;
+		private long offered;
+		private long bid;
+		private long revenue;
+	}
+
+	@Getter
+	@EqualsAndHashCode
+	public static class Flip
+	{
+		private int id;
+		private String name;
+		private long buy;
+		private long sell;
+		private int qty;
+		private long profitLow;
+		private long profitHigh;
+	}
+
 	/** GET v1/items: a summary per item. Older servers ignore the ids filter and return every item. */
 	@Getter
 	@EqualsAndHashCode

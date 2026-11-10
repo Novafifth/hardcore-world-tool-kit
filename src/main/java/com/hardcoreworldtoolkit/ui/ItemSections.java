@@ -119,10 +119,8 @@ final class ItemSections
 			String age = Format.ago(s.getTrustedPriceTime(), now);
 			String sub = age.isEmpty() ? players : players == null ? age : age + " · " + players;
 			cells.add(new StatCell(TYPICAL_LABEL, Format.gp(s.getTrustedPrice()), sub, Accent.NEUTRAL,
-				"Median price of confirmed trades of the last 7 days, one vote per player"
-					+ (age.isEmpty() ? "" : "; the newest of them was " + ("now".equals(age) ? "just now" : age + " ago"))
-					+ ". Confirmed trades come from established players at a normal price, or were matched by another "
-					+ "player's report."));
+				"Median of confirmed trades in the last 7 days, one vote per player"
+					+ (age.isEmpty() ? "" : ". Newest: " + ("now".equals(age) ? "just now" : age + " ago"))));
 		}
 		if (highAlch != null && highAlch > 0)
 		{

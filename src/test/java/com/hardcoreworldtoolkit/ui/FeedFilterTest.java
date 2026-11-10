@@ -25,13 +25,13 @@ public class FeedFilterTest
 	}
 
 	@Test
-	public void itemRecentTradesDropPlacements()
+	public void itemRecentTradesDropPlacementsAndCancellations()
 	{
 		MarketData.ItemDetail d = gson.fromJson("{\"trades\":[{\"kind\":\"placed\",\"qty\":1},{\"kind\":\"fill\",\"qty\":2},"
 			+ "{\"kind\":\"cancelled\",\"qty\":3},{\"kind\":\"history\",\"qty\":4}]}", MarketData.ItemDetail.class);
 		List<Integer> qtys = ItemView.recentTrades(d.getTrades()).stream().map(MarketData.Trade::getQty)
 			.collect(Collectors.toList());
-		assertEquals(Arrays.asList(2, 3, 4), qtys);
+		assertEquals(Arrays.asList(2, 4), qtys);
 	}
 
 }

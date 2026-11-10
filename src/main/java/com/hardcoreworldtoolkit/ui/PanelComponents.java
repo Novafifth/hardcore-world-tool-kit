@@ -75,6 +75,13 @@ final class PanelComponents
 	static JComponent tradeRow(ItemManager itemManager, int itemId, String name, String line2, String right,
 		BiConsumer<Integer, String> onOpen)
 	{
+		return tradeRow(itemManager, itemId, name, line2, right, false, onOpen);
+	}
+
+	/** @param rightBelow {@code right} ends the second line, so the name keeps the first */
+	static JComponent tradeRow(ItemManager itemManager, int itemId, String name, String line2, String right,
+		boolean rightBelow, BiConsumer<Integer, String> onOpen)
+	{
 		JPanel row = new JPanel(new BorderLayout(6, 0));
 		row.setBackground(ColorScheme.DARKER_GRAY_COLOR);
 		row.setBorder(new EmptyBorder(3, 4, 3, 6));
@@ -87,12 +94,21 @@ final class PanelComponents
 		JPanel text = new JPanel(new GridLayout(line2 == null ? 1 : 2, 1));
 		text.setOpaque(false);
 		text.add(smallLabel(display, Color.WHITE));
-		if (line2 != null)
+		boolean below = rightBelow && line2 != null && right != null;
+		if (below)
+		{
+			JPanel second = new JPanel(new BorderLayout());
+			second.setOpaque(false);
+			second.add(smallLabel(line2, ColorScheme.TEXT_COLOR), BorderLayout.CENTER);
+			second.add(smallLabel(right, ColorScheme.PROGRESS_COMPLETE_COLOR), BorderLayout.EAST);
+			text.add(second);
+		}
+		else if (line2 != null)
 		{
 			text.add(smallLabel(line2, ColorScheme.TEXT_COLOR));
 		}
 		row.add(text, BorderLayout.CENTER);
-		if (right != null)
+		if (right != null && !below)
 		{
 			JLabel when = mutedLabel(right);
 			when.setVerticalAlignment(SwingConstants.TOP);
@@ -257,6 +273,25 @@ final class PanelComponents
 		});
 		styleTab(b, false);
 		return b;
+	}
+
+	static JButton segButton(String text)
+	{
+		JButton b = new JButton(text);
+		b.setFont(FontManager.getRunescapeSmallFont());
+		b.setFocusPainted(false);
+		b.setContentAreaFilled(false);
+		b.setOpaque(true);
+		b.setBorder(new EmptyBorder(6, 22, 6, 22));
+		b.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+		styleSeg(b, false);
+		return b;
+	}
+
+	static void styleSeg(JButton b, boolean on)
+	{
+		b.setBackground(on ? ColorScheme.MEDIUM_GRAY_COLOR : ColorScheme.DARKER_GRAY_COLOR);
+		b.setForeground(on ? Color.WHITE : ColorScheme.LIGHT_GRAY_COLOR);
 	}
 
 	static void styleTab(JButton b, boolean on)

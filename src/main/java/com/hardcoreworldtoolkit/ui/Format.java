@@ -1,6 +1,8 @@
 package com.hardcoreworldtoolkit.ui;
 
 import com.hardcoreworldtoolkit.TradeEvent;
+import java.math.BigDecimal;
+import java.math.MathContext;
 import java.time.Instant;
 import java.util.Locale;
 import net.runelite.client.util.QuantityFormatter;
@@ -67,6 +69,19 @@ final class Format
 			v++;
 		}
 		return (v > 0 ? "+" : "-") + QuantityFormatter.quantityToStackSize(Math.abs(v));
+	}
+
+	/** "212", "5.2K", "39K", "1.48M". */
+	static String compact(long v)
+	{
+		long a = Math.abs(v);
+		if (a < 1_000)
+		{
+			return String.valueOf(v);
+		}
+		int e = a < 1_000_000 ? 3 : a < 1_000_000_000 ? 6 : 9;
+		String n = BigDecimal.valueOf(a, e).round(new MathContext(3)).stripTrailingZeros().toPlainString();
+		return (v < 0 ? "-" : "") + n + "KMB".charAt(e / 3 - 1);
 	}
 
 	/** A compact unsigned gp amount, e.g. "1.25M", "950K", "1,500". */

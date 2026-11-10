@@ -126,6 +126,16 @@ public class MarketClient
 		get(url("v1/items").addQueryParameter("ids", list), fresh, MarketData.ItemsResponse.class, DIRECT, ok, err);
 	}
 
+	public void flips(long gold, Consumer<MarketData.Flips> ok, Consumer<String> err)
+	{
+		get(url("v1/flips").addQueryParameter("capital", String.valueOf(gold)).addQueryParameter("limit", "200"), false, MarketData.Flips.class, EDT, ok, err);
+	}
+
+	public void gaps(Consumer<MarketData.Gaps> ok, Consumer<String> err)
+	{
+		get(url("v1/gaps").addQueryParameter("limit", "200"), false, MarketData.Gaps.class, EDT, ok, err);
+	}
+
 	/** The estimated Hardcore : OSRS gold rate, from what an Old school bond costs on each market. */
 	public void swapRate(Consumer<MarketData.SwapRate> ok, Consumer<String> err)
 	{

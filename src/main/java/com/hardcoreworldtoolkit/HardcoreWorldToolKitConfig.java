@@ -26,6 +26,7 @@ public interface HardcoreWorldToolKitConfig extends Config
 	String KEY_ITEM_MENU = "itemMenuOption";
 	String KEY_SHOW_PROFIT = "showProfit";
 	String KEY_STALE_HOURS = "staleHours";
+	String KEY_FLIPS_GOLD = "flipsGold";
 	String KEY_OFFER_NOTIFICATION = "offerNotification";
 	/** Not a setting: set once the one-time chat hint has been considered for this install. */
 	String KEY_HINT_SHOWN = "chatHintShown";
@@ -186,6 +187,19 @@ public interface HardcoreWorldToolKitConfig extends Config
 	default boolean showProfit()
 	{
 		return false;
+	}
+
+	@Range(min = 100, max = 100000)
+	@ConfigItem(
+		keyName = KEY_FLIPS_GOLD,
+		name = "Gold for flips (K)",
+		description = "How much gold the Flips tab plans for, in thousands",
+		position = 4,
+		section = SECTION_PANEL
+	)
+	default int flipsGold()
+	{
+		return 1000;
 	}
 
 	@Range(min = 1, max = 72)
