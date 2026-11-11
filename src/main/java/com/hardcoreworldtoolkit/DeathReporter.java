@@ -15,7 +15,7 @@ class DeathReporter
 {
 	private static final long OWN_WAIT = 60;
 	/** Everyone online sees each broadcast: each player sends about one in this many (always their own death). */
-	static final int REPORT_ONE_IN = 5;
+	static final int REPORT_ONE_IN = 15;
 	private static final Callback IGNORE = new Callback()
 	{
 		@Override
