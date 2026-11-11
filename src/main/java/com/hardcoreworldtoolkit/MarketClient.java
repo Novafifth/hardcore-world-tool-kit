@@ -182,7 +182,8 @@ public class MarketClient
 		return base.newBuilder()
 			.addPathSegments(path)
 			.addQueryParameter("world", String.valueOf(world))
-			.addQueryParameter("include", INCLUDE);
+			.addQueryParameter("include", INCLUDE)
+			.addQueryParameter("c", "p");
 	}
 
 	/** @param callbacks where {@code ok} / {@code err} run */

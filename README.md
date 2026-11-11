@@ -58,13 +58,13 @@ Under **Configuration > Hardcore World Tool Kit**, or the gear button in the pan
   third-party warning first.
 - Once connected, the plugin shares your own Hardcore World Grand Exchange trades and open offers (item, price,
   quantity, time). They are sent with a random install id and a hashed account id. Your name is never sent, and the
-  server never stores IP addresses.
+  server never stores IP addresses. Requests go through Cloudflare, which sees your IP address.
 - With **Share deaths** on, it also sends the text of each death broadcast you see (names, killer, region, as the game
   shows them to everyone), and the tile of your own deaths.
 - **Delete my shared data** in the panel (while connected) removes everything your computer has shared. You can turn
   sharing off at any time.
 - The full privacy notice:
-  [hardcore-ge-tracker-107023686748.europe-north1.run.app/privacy/hardcore](https://hardcore-ge-tracker-107023686748.europe-north1.run.app/privacy/hardcore)
+  [hcwtoolkit.com/privacy/hardcore](https://hcwtoolkit.com/privacy/hardcore)
 
 ## FAQ
 

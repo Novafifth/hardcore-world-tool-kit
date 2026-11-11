@@ -1,6 +1,7 @@
 package com.hardcoreworldtoolkit;
 
 import static org.junit.Assert.assertEquals;
+import okhttp3.HttpUrl;
 import org.junit.Test;
 
 public class ServerUrlTest
@@ -10,6 +11,13 @@ public class ServerUrlTest
 	{
 		assertEquals(HardcoreWorldToolKitPlugin.PRODUCTION_SERVER_URL, HardcoreWorldToolKitPlugin.serverUrl(false, null));
 		assertEquals(HardcoreWorldToolKitPlugin.PRODUCTION_SERVER_URL, HardcoreWorldToolKitPlugin.serverUrl(false, "http://evil.example"));
+	}
+
+	@Test
+	public void productionKeepsTheIdentityFile()
+	{
+		HttpUrl production = HttpUrl.get(HardcoreWorldToolKitPlugin.PRODUCTION_SERVER_URL);
+		assertEquals(IdentityFile.FILE_NAME, IdentityFile.fileNameFor(HttpUrl.get(HardcoreWorldToolKitPlugin.serverUrl(false, null)), production));
 	}
 
 	@Test

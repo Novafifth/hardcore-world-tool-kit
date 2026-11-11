@@ -97,7 +97,7 @@ public class HardcoreWorldToolKitPlugin extends Plugin
 	 */
 	static final int HARDCORE_ECONOMY = 9000;
 	/** Collection server for every normal (Plugin Hub) install (Google Cloud Run, europe-north1). Players can't change it. */
-	static final String PRODUCTION_SERVER_URL = "https://hardcore-ge-tracker-107023686748.europe-north1.run.app";
+	static final String PRODUCTION_SERVER_URL = "https://hcwtoolkit.com";
 	/** Server used when RuneLite runs in developer mode (the dev client): the local server from server/ (npm run dev). */
 	static final String LOCAL_SERVER_URL = "http://localhost:8787";
 	/** Developer-mode only: point the dev client at another server, e.g. -Dhardcoreworldtoolkit.server=https://staging.example */
