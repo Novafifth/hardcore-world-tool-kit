@@ -54,8 +54,7 @@ Profit is worked out locally from your own Hardcore World fills and GE History r
 computer. It is shown only with *Show profit* on, but the totals are kept up to date either way.
 
 - For each item it keeps the units you hold (bought minus sold, within what the plugin has seen), their average cost
-  (a moving average) and the profit realized when you sell. The figures are gross: no Grand Exchange tax is
-  subtracted.
+  (a moving average) and the profit realized when you sell.
 - Selling more units than the plugin saw you buy (bought before you installed it, or while it was off) has no known
   cost. Those proceeds are shown as "sold without known cost" and are not counted as profit.
 - GE History rows have no real time, so they count on the day you import them; the panel says how much of the total

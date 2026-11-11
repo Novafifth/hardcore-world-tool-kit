@@ -26,7 +26,7 @@ side panel.
 - Your offers and fills are recorded as they happen, and past trades are picked up from the game's GE History tab. They
   are kept in a monthly log on your computer.
 - Profit (turn on **Show profit**): realized profit today, over 7 days and all time, per item. It's worked out on your
-  computer from your own trades, and it doesn't subtract any Grand Exchange tax.
+  computer from your own trades.
 
 ## Getting started
 

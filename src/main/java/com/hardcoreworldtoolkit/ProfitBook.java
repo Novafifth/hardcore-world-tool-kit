@@ -17,7 +17,7 @@ import java.util.TreeMap;
  * (read and written with Gson), so applying an event is O(1) and start-up never replays the trade log.
  * <p>
  * Per item it keeps the units held (bought minus sold, within the tracked data), their cost (moving average) and the
- * realized profit on sells. No GE tax is subtracted. A sell of more units than are held (bought before the plugin was
+ * realized profit on sells. A sell of more units than are held (bought before the plugin was
  * installed, or while the log was off) has no known cost: those proceeds are counted as "unknown basis", not profit.
  * <p>
  * Daily totals are keyed by the event's local date. GE History rows have no real time; their ts is when they were
