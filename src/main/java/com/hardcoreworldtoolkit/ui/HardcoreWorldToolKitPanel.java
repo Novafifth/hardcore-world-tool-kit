@@ -275,7 +275,6 @@ public class HardcoreWorldToolKitPanel extends PluginPanel
 
 	private void answerGeAsk(boolean keep)
 	{
-		configManager.setConfiguration(HardcoreWorldToolKitConfig.GROUP, HardcoreWorldToolKitConfig.KEY_GE_OPEN_ASKED, true);
 		if (!keep)
 		{
 			configManager.setConfiguration(HardcoreWorldToolKitConfig.GROUP, HardcoreWorldToolKitConfig.KEY_GE_SWITCH, false);
@@ -844,6 +843,7 @@ public class HardcoreWorldToolKitPanel extends PluginPanel
 		if (askGe)
 		{
 			itemView.showGeAsk();
+			configManager.setConfiguration(HardcoreWorldToolKitConfig.GROUP, HardcoreWorldToolKitConfig.KEY_GE_OPEN_ASKED, true);
 		}
 		searchDebounce.stop();
 		if (!searchField.getText().isEmpty())

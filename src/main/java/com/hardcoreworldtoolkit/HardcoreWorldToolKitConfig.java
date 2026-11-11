@@ -30,7 +30,7 @@ public interface HardcoreWorldToolKitConfig extends Config
 	String KEY_OFFER_NOTIFICATION = "offerNotification";
 	/** Not a setting: set once the one-time chat hint has been considered for this install. */
 	String KEY_HINT_SHOWN = "chatHintShown";
-	/** Not a setting: set once the player answered "open the sidebar for GE offers?" (the card a GE offer shows). */
+	/** Not a setting: set once the "open the sidebar for GE offers?" card has been shown. */
 	String KEY_GE_OPEN_ASKED = "geOpenAsked";
 
 	String THIRD_PARTY_WARNING = "This feature submits your IP address to a 3rd-party server not controlled or verified by RuneLite developers";
