@@ -22,6 +22,7 @@ import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.Insets;
 import java.awt.Point;
+import java.awt.Window;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
@@ -135,6 +136,7 @@ public class HardcoreWorldToolKitPanel extends PluginPanel
 	private JButton stats;
 	private final ItemView itemView;
 	private final Timer refreshTimer;
+	private int refreshesSkipped;
 	private long bondAt;
 	private final Timer searchDebounce;
 	/** Drives the per-second labels, only while the panel is shown. */
@@ -257,7 +259,11 @@ public class HardcoreWorldToolKitPanel extends PluginPanel
 		{
 			// A little different each time, so panels don't all ask at the same moment.
 			((Timer) e.getSource()).setDelay(REFRESH_MS + ThreadLocalRandom.current().nextInt(-REFRESH_MS / 5, REFRESH_MS / 5));
-			refresh();
+			if (windowActive() || ++refreshesSkipped >= 4)
+			{
+				refreshesSkipped = 0;
+				refresh();
+			}
 		});
 		ticker = new Timer(TICK_MS, e -> tick());
 		onConfigChanged();
@@ -500,8 +506,19 @@ public class HardcoreWorldToolKitPanel extends PluginPanel
 	}
 
 	/** Once a second while the panel is shown. */
+	private boolean windowActive()
+	{
+		Window window = SwingUtilities.getWindowAncestor(this);
+		return window == null || window.isActive();
+	}
+
 	private void tick()
 	{
+		if (refreshesSkipped > 0 && windowActive())
+		{
+			refreshesSkipped = 0;
+			refresh();
+		}
 		if (importNotice != null && --importNoticeSecondsLeft <= 0)
 		{
 			dismissImportNotice();
