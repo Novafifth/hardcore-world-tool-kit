@@ -612,6 +612,7 @@ public class HardcoreWorldToolKitPlugin extends Plugin
 	public void onConfigChanged(ConfigChanged e)
 	{
 		if (HardcoreWorldToolKitConfig.GROUP.equals(e.getGroup()) && (HardcoreWorldToolKitConfig.KEY_HIDE_DEATHS.equals(e.getKey())
+			|| HardcoreWorldToolKitConfig.KEY_WILDERNESS_DEATHS_ONLY.equals(e.getKey())
 			|| HardcoreWorldToolKitConfig.KEY_SHOW_FRIENDS_DEATHS.equals(e.getKey())))
 		{
 			clientThread.invoke(client::refreshChat);
@@ -707,7 +708,8 @@ public class HardcoreWorldToolKitPlugin extends Plugin
 	private void filterDeath()
 	{
 		int min = config.hideDeathsBelow();
-		if (min <= 0 || !isTrackedWorld())
+		boolean wildOnly = config.wildernessDeathsOnly();
+		if ((min <= 0 && !wildOnly) || !isTrackedWorld())
 		{
 			return;
 		}
@@ -719,16 +721,15 @@ public class HardcoreWorldToolKitPlugin extends Plugin
 			return;
 		}
 		DeathBroadcast b = DeathBroadcast.parse((String) client.getObjectStack()[client.getObjectStackSize() - 1]);
-		if (b == null || b.level() < 0 || b.level() >= min || spared(b.getVictim().trim()))
+		if (b != null && ((b.level() >= 0 && b.level() < min) || (wildOnly && !b.inWilderness())) && !spared(b.getVictim().trim()))
 		{
-			return;
+			ints[n - 3] = 0;
 		}
-		ints[n - 3] = 0;
 	}
 
 	private void maybeDeathHint(ChatMessage e)
 	{
-		if (config.deathHintShown() || config.hideDeathsBelow() > 0 || !isTrackedWorld()
+		if (config.deathHintShown() || config.hideDeathsBelow() > 0 || config.wildernessDeathsOnly() || !isTrackedWorld()
 			|| (e.getType() != ChatMessageType.BROADCAST && e.getType() != ChatMessageType.GAMEMESSAGE)
 			|| DeathBroadcast.parse(e.getMessage()) == null)
 		{

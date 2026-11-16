@@ -70,6 +70,7 @@ public interface HardcoreWorldToolKitConfig extends Config
 	)
 	String SECTION_CHAT = "chat";
 	String KEY_HIDE_DEATHS = "hideDeathsBelow";
+	String KEY_WILDERNESS_DEATHS_ONLY = "wildernessDeathsOnly";
 	String KEY_SHOW_FRIENDS_DEATHS = "showFriendsDeaths";
 	String KEY_DEATH_HINT_SHOWN = "deathHintShown";
 
@@ -87,10 +88,22 @@ public interface HardcoreWorldToolKitConfig extends Config
 	}
 
 	@ConfigItem(
+		keyName = KEY_WILDERNESS_DEATHS_ONLY,
+		name = "Wilderness only",
+		description = "Hide death broadcasts from outside the Wilderness. Your own death always shows",
+		position = 1,
+		section = SECTION_CHAT
+	)
+	default boolean wildernessDeathsOnly()
+	{
+		return false;
+	}
+
+	@ConfigItem(
 		keyName = KEY_SHOW_FRIENDS_DEATHS,
 		name = "Always show friends and clan",
-		description = "Show the deaths of friends and clan mates whatever their total level",
-		position = 1,
+		description = "Show the deaths of friends and clan mates whatever their total level or area",
+		position = 2,
 		section = SECTION_CHAT
 	)
 	default boolean showFriendsDeaths()

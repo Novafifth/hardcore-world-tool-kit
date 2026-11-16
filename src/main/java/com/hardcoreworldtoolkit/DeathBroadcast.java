@@ -13,9 +13,15 @@ class DeathBroadcast
 	private static final String LEVEL = "\\((\\d+(?:\\.\\d+)?k?)\\)";
 	private static final Pattern KILLED = Pattern.compile(".+? killed (.+?)" + LEVEL + " with an? \\d+ damage hit.*", Pattern.CASE_INSENSITIVE);
 	private static final Pattern DIED = Pattern.compile("(.+?)" + LEVEL + " was killed by an? \\d+ damage hit.*", Pattern.CASE_INSENSITIVE);
+	private static final Pattern WILDERNESS = Pattern.compile(" in (?:the )?Wilderness\\.?$", Pattern.CASE_INSENSITIVE);
 
 	String text;
 	String victim;
+
+	boolean inWilderness()
+	{
+		return WILDERNESS.matcher(text).find();
+	}
 
 	static DeathBroadcast parse(String message)
 	{
