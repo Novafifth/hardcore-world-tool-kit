@@ -192,8 +192,8 @@ public class MarketClient
 	{
 		if (!fresh && backoff.waiting())
 		{
-			// The server said it is overloaded: keep showing what we have, ask again after the wait.
-			callbacks.execute(() -> err.accept(serverError(503)));
+			// Overloaded or unreachable: keep showing what we have, ask again after the wait.
+			callbacks.execute(() -> err.accept(backoff.cause() == 0 ? UNREACHABLE : serverError(backoff.cause())));
 			return;
 		}
 		Callback callback = new Callback()

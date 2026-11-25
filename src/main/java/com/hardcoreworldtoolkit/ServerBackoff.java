@@ -18,6 +18,8 @@ final class ServerBackoff
 	private final Random random;
 	private long until;
 	private int failures;
+	/** The last failure's HTTP status, 0: unreachable. */
+	private int cause;
 
 	ServerBackoff(LongSupplier clock, Random random)
 	{
@@ -32,8 +34,14 @@ final class ServerBackoff
 	}
 
 	/** @param retryAfterSeconds the server's Retry-After, or 0 if it gave none */
+	synchronized int cause()
+	{
+		return cause;
+	}
+
 	synchronized void failed(long retryAfterSeconds)
 	{
+		cause = 0;
 		long wait = BASE_MS << Math.min(failures, 4);
 		failures++;
 		wait = Math.max(Math.min(wait, MAX_MS), Math.min(retryAfterSeconds * 1000L, MAX_MS));
@@ -48,11 +56,12 @@ final class ServerBackoff
 	}
 
 	/** Records a response: 503 / 429 start or lengthen the wait, any other answer below 500 ends it. */
-	void observe(int code, String retryAfter)
+	synchronized void observe(int code, String retryAfter)
 	{
 		if (code == 503 || code == 429)
 		{
 			failed(parseSeconds(retryAfter));
+			cause = code;
 		}
 		else if (code < 500)
 		{
